@@ -1,1940 +1,421 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html>
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>متاهة الكنوز - أونلاين</title>
-<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
+<title>Treasure Maze</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+Arabic:wght@400;700;900&family=Orbitron:wght@700;900&display=swap');
-
-:root {
-  --bg:    #04040d;
-  --c1:    #080815;
-  --c2:    #0d0d1f;
-  --c3:    #131328;
-  --neon:  #00ffa3;
-  --neon2: #00cc7a;
-  --gold:  #ffd700;
-  --acc:   #ff2d55;
-  --blue:  #007aff;
-  --violet:#b044ff;
-  --text:  #d8deff;
-  --dim:   #3a3a58;
-  --bdr:   #ffffff0e;
-  --glow-g: 0 0 12px #00ffa355, 0 0 40px #00ffa310;
-  --glow-gold: 0 0 14px #ffd70055, 0 0 40px #ffd70015;
+body {
+  margin: 0;
+  overflow: hidden;
+  background-color: #0b0614; /* Dark background for maze */
+  font-family: sans-serif;
+  color: #eee;
+  text-align: center;
 }
-
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-
-html,body{
-  width:100%;height:100%;
-  background:var(--bg);
-  color:var(--text);
-  font-family:'Space Mono','Noto Sans Arabic',monospace;
-  overflow:hidden;touch-action:none;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
+canvas {
+  display: block;
+  background-color: #0b0614;
 }
-
-/* Animated background grid */
-body::before{
-  content:'';
-  position:fixed;inset:0;
-  background-image:
-    linear-gradient(rgba(0,255,163,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,255,163,0.025) 1px, transparent 1px);
-  background-size:40px 40px;
-  animation:gridMove 20s linear infinite;
-  pointer-events:none;z-index:0;
+#game-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
-body::after{
-  content:'';
-  position:fixed;inset:0;
-  background:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,255,163,0.04) 0%, transparent 70%),
-             radial-gradient(ellipse 60% 40% at 80% 100%, rgba(176,68,255,0.04) 0%, transparent 70%);
-  pointer-events:none;z-index:0;
+#game-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  color: white;
+  font-size: 1.5em;
 }
-@keyframes gridMove{to{background-position:0 40px;}}
-
-.screen{display:none;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;position:relative;z-index:1;}
-.screen.active{display:flex;}
-
-/* ══ MENU ══ */
-#s-menu{background:transparent;}
-
-.logo{
-  text-align:center;
-  margin-bottom:28px;
+#game-overlay h1 {
+  color: #ffd700; /* Gold color for title */
+  font-size: 2.5em;
+  text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700;
 }
-.logo-main{
-  font-family:'Orbitron',monospace;
-  font-size:clamp(20px,6vw,36px);
-  font-weight:900;
-  color:var(--neon);
-  letter-spacing:2px;
-  text-shadow:var(--glow-g);
-  line-height:1;
-  animation:logoPulse 3s ease-in-out infinite;
+#game-overlay button {
+  padding: 15px 30px;
+  font-size: 1.2em;
+  background-color: #ffd700;
+  color: #0b0614;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
 }
-.logo-icon{font-size:clamp(28px,8vw,48px);display:block;margin-bottom:8px;filter:drop-shadow(0 0 12px #ffd70088);}
-.logo-sub{
-  font-family:'Space Mono',monospace;
-  font-size:9px;letter-spacing:8px;
-  color:var(--dim);text-transform:uppercase;
-  margin-top:8px;
+#game-overlay button:hover {
+  background-color: #e6c200;
 }
-@keyframes logoPulse{
-  0%,100%{text-shadow:var(--glow-g);}
-  50%{text-shadow:0 0 20px #00ffa388, 0 0 60px #00ffa330, 0 0 100px #00ffa310;}
+#score-board {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 101;
+  font-size: 1.1em;
 }
-
-.panel{
-  width:min(340px,92vw);
-  background:rgba(8,8,21,0.9);
-  border:1px solid rgba(0,255,163,0.12);
-  border-top:2px solid var(--neon);
-  padding:22px 18px;
-  display:flex;flex-direction:column;gap:10px;
-  backdrop-filter:blur(20px);
-  box-shadow:0 0 40px rgba(0,255,163,0.04), 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
-  position:relative;overflow:hidden;
+#message-display {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 101;
+  font-size: 1.1em;
+  max-width: 300px;
+  text-align: right;
 }
-.panel::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(0,255,163,0.4),transparent);
-}
-
-.field-wrap{display:flex;flex-direction:column;gap:5px;}
-.field-lbl{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;}
-.field{
-  width:100%;background:rgba(13,13,31,0.8);
-  border:1px solid rgba(255,255,255,0.06);
-  color:var(--text);padding:11px 14px;
-  font-family:'Space Mono',monospace;font-size:13px;
-  outline:none;border-radius:0;
-  transition:border-color 0.15s, box-shadow 0.15s;
-}
-.field:focus{border-color:rgba(0,255,163,0.4);box-shadow:0 0 0 1px rgba(0,255,163,0.1) inset;}
-.field::placeholder{color:var(--dim);}
-
-.btn-main{
-  width:100%;padding:13px;
-  background:linear-gradient(135deg,var(--neon),var(--neon2));
-  border:none;color:#030810;
-  font-family:'Space Mono',monospace;font-size:12px;font-weight:700;
-  cursor:pointer;letter-spacing:2px;text-transform:uppercase;
-  transition:opacity 0.15s,transform 0.08s,box-shadow 0.15s;
-  box-shadow:0 4px 20px rgba(0,255,163,0.3);
-  position:relative;overflow:hidden;
-}
-.btn-main::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,0.15) 50%,transparent 60%);
-  transform:translateX(-100%);transition:transform 0.4s;
-}
-.btn-main:hover::after{transform:translateX(100%);}
-.btn-main:active{opacity:0.85;transform:scale(0.98);box-shadow:0 2px 10px rgba(0,255,163,0.2);}
-
-.btn-line{
-  width:100%;padding:11px;background:transparent;
-  border:1px solid rgba(255,255,255,0.08);color:var(--dim);
-  font-family:'Space Mono',monospace;font-size:10px;
-  cursor:pointer;letter-spacing:2px;text-transform:uppercase;
-  transition:border-color 0.15s,color 0.15s,background 0.15s;
-}
-.btn-line:hover{border-color:rgba(0,255,163,0.25);color:rgba(0,255,163,0.7);}
-.btn-line:active{border-color:var(--neon);color:var(--neon);background:rgba(0,255,163,0.05);}
-
-.row-sep{
-  display:flex;align-items:center;gap:10px;
-  font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);
-}
-.row-sep::before,.row-sep::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.05);}
-
-.join-row{display:flex;gap:6px;}
-.join-row .field{flex:1;letter-spacing:6px;text-align:center;font-weight:700;font-size:16px;}
-.join-row .btn-line{width:auto;padding:11px 16px;white-space:nowrap;flex-shrink:0;}
-
-/* ══ CREATE ══ */
-#s-create{padding:12px;overflow-y:auto;}
-
-.top-bar{
-  display:flex;align-items:center;gap:10px;
-  width:min(380px,96vw);margin-bottom:12px;
-}
-.btn-back{
-  width:34px;height:34px;
-  background:rgba(13,13,31,0.8);
-  border:1px solid rgba(255,255,255,0.08);color:var(--dim);
-  font-family:'Space Mono',monospace;font-size:14px;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;flex-shrink:0;transition:all 0.15s;
-}
-.btn-back:hover{color:var(--neon);border-color:rgba(0,255,163,0.3);}
-.btn-back:active{color:var(--neon);border-color:var(--neon);}
-.top-bar-title{
-  font-family:'Space Mono',monospace;font-size:11px;
-  color:var(--dim);letter-spacing:3px;text-transform:uppercase;
-}
-
-.cfg-panel{
-  width:min(380px,96vw);
-  background:rgba(8,8,21,0.92);
-  border:1px solid rgba(255,255,255,0.06);border-top:2px solid rgba(255,255,255,0.15);
-  padding:16px;display:flex;flex-direction:column;gap:12px;
-  backdrop-filter:blur(20px);
-}
-.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.cfg-item{display:flex;flex-direction:column;gap:5px;}
-.cfg-item label{font-family:'Space Mono',monospace;font-size:8px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;}
-.cfg-item select{
-  background:rgba(13,13,31,0.8);border:1px solid rgba(255,255,255,0.06);
-  color:var(--text);padding:9px 11px;
-  font-family:'Space Mono',monospace;font-size:11px;
-  outline:none;border-radius:0;width:100%;
-  transition:border-color 0.15s;
-}
-.cfg-item select:focus{border-color:rgba(0,255,163,0.3);}
-select option{background:#0d0d1f;}
-
-.coop-info{
-  background:rgba(0,122,255,0.05);
-  border:1px solid rgba(0,122,255,0.15);border-left:2px solid var(--blue);
-  padding:9px 12px;font-size:11px;color:#6699cc;line-height:1.7;
-  font-family:'Noto Sans Arabic',sans-serif;
-}
-
-/* ══ LOBBY ══ */
-#s-lobby{padding:16px;}
-.lobby-panel{
-  width:min(340px,92vw);
-  background:rgba(8,8,21,0.9);border:1px solid rgba(255,215,0,0.12);border-top:2px solid var(--gold);
-  padding:20px;display:flex;flex-direction:column;gap:12px;align-items:center;
-  backdrop-filter:blur(20px);
-  box-shadow:0 0 40px rgba(255,215,0,0.04), 0 20px 60px rgba(0,0,0,0.6);
-}
-.code-lbl{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:4px;text-transform:uppercase;}
-#roomCodeDisplay{
-  font-family:'Orbitron',monospace;font-size:38px;font-weight:900;
-  color:var(--gold);letter-spacing:10px;
-  text-shadow:var(--glow-gold);
-  animation:codePulse 2s ease-in-out infinite;
-}
-@keyframes codePulse{
-  0%,100%{text-shadow:var(--glow-gold);}
-  50%{text-shadow:0 0 20px #ffd70088,0 0 60px #ffd70030;}
-}
-#lobbyPlayers{width:100%;display:flex;flex-direction:column;gap:5px;}
-.player-row{
-  display:flex;justify-content:space-between;align-items:center;
-  background:rgba(13,13,31,0.7);padding:8px 12px;font-size:12px;
-  border-left:2px solid var(--dim);font-family:'Space Mono',monospace;
-  transition:border-color 0.2s;
-}
-.player-row.is-host{border-left-color:var(--gold);}
-.player-row .ready-tag{font-family:'Space Mono',monospace;font-size:9px;color:var(--neon);letter-spacing:2px;}
-#lobbySettings{font-size:9px;color:var(--dim);text-align:center;line-height:2;font-family:'Space Mono',monospace;letter-spacing:1px;}
-
-/* ══ COUNTDOWN ══ */
-#s-countdown{background:transparent;}
-#cdNum{
-  font-family:'Orbitron',monospace;
-  font-size:clamp(100px,28vw,180px);font-weight:900;
-  color:var(--neon);line-height:1;
-  text-shadow:0 0 40px #00ffa388,0 0 100px #00ffa333, 0 0 200px #00ffa310;
-  animation:cdPulse 1s ease-in-out;
-}
-@keyframes cdPulse{from{transform:scale(1.4);opacity:0}to{transform:scale(1);opacity:1}}
-.cd-sub{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:6px;color:var(--dim);text-transform:uppercase;margin-top:12px;}
-
-/* ══ HUD ══ */
-#hud{
-  width:100%;
-  display:flex;align-items:stretch;
-  background:rgba(4,4,13,0.95);
-  border-bottom:1px solid rgba(0,255,163,0.08);
-  height:34px;flex-shrink:0;
-  backdrop-filter:blur(10px);
-}
-.hitem{
-  display:flex;align-items:center;gap:6px;
-  padding:0 12px;border-left:1px solid rgba(255,255,255,0.04);
-  font-family:'Space Mono',monospace;font-size:10px;
-}
-.hitem:first-child{border-left:none;}
-.hi-label{color:var(--dim);}
-.hi-val{color:var(--text);font-weight:700;}
-.hi-val.ready{color:var(--acc);}
-.hi-val.cd{color:var(--dim);}
-.hitem.hi-time .hi-val{color:var(--gold);font-size:12px;text-shadow:0 0 8px #ffd70055;}
-#hudRole{display:none;}
-
-#timerBar{height:2px;background:rgba(255,255,255,0.04);width:100%;flex-shrink:0;}
-#timerFill{height:100%;background:linear-gradient(90deg,var(--neon2),var(--neon));transition:width 0.5s linear;box-shadow:0 0 6px var(--neon);}
-
-/* ══ CANVAS WRAP ══ */
-#wrap{
-  position:relative;overflow:hidden;
-  flex:1;width:100%;
-}
-#gc{display:block;width:100%;height:100%;}
-
-/* ══ SCOREBOARD ══ */
-#scoreboard{
-  position:absolute;top:8px;left:8px;
-  background:rgba(4,4,13,0.88);
-  border:1px solid rgba(255,255,255,0.06);border-left:2px solid var(--neon2);
-  padding:7px 10px;min-width:110px;font-size:10px;
-  font-family:'Space Mono',monospace;display:none;
-  backdrop-filter:blur(10px);
-}
-#scoreboard .sb-row{display:flex;justify-content:space-between;gap:8px;padding:2px 0;}
-#scoreboard .sb-name{color:var(--dim);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#scoreboard .sb-pts{color:var(--gold);text-shadow:0 0 6px #ffd70044;}
-#scoreboard .sb-me{color:var(--neon);}
-
-/* ══ MINIMAP ══ */
-#minimap{
-  position:absolute;bottom:8px;right:8px;
-  border:1px solid rgba(0,255,163,0.1);
-  opacity:0.8;box-shadow:0 0 20px rgba(0,0,0,0.5);
-}
-
-/* ══ D-PAD ══ */
-#dpad{
-  display:none;position:relative;
-  width:132px;height:132px;flex-shrink:0;
-  margin:6px auto 4px;
-}
-#dpad-center{display:none;}
-.db{
-  position:absolute;width:42px;height:42px;
-  background:rgba(13,13,31,0.9);
-  border:1px solid rgba(255,255,255,0.07);
-  color:var(--dim);font-family:'Space Mono',monospace;font-size:14px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;user-select:none;
-  transition:background 0.07s,color 0.07s,transform 0.06s,box-shadow 0.07s;
-}
-.db.on{
-  background:rgba(0,255,163,0.15);color:var(--neon);
-  border-color:rgba(0,255,163,0.5);transform:scale(0.88);
-  box-shadow:0 0 12px rgba(0,255,163,0.2);
-}
-#db-u{top:0;left:45px;border-radius:6px 6px 0 0;}
-#db-d{bottom:0;left:45px;border-radius:0 0 6px 6px;}
-#db-l{top:45px;left:0;border-radius:6px 0 0 6px;}
-#db-r{top:45px;right:0;border-radius:0 6px 6px 0;}
-
-/* ══ BREAK INDICATOR ══ */
-#brkInd{
-  position:absolute;bottom:8px;left:8px;
-  background:rgba(4,4,13,0.88);
-  border:1px solid rgba(255,255,255,0.06);
-  border-left:2px solid var(--acc);
-  padding:4px 10px;font-size:9px;
-  font-family:'Space Mono',monospace;letter-spacing:2px;
-  display:none;backdrop-filter:blur(10px);
-}
-
-/* ══ END SCREEN ══ */
-#s-end{padding:16px;gap:14px;}
-.end-ttl{
-  font-family:'Orbitron',monospace;
-  font-size:clamp(14px,3.5vw,20px);font-weight:900;
-  color:var(--gold);letter-spacing:3px;text-align:center;
-  text-shadow:var(--glow-gold);
-}
-#endPodium{width:100%;display:flex;flex-direction:column;gap:5px;}
-.podium-row{
-  display:flex;align-items:center;gap:10px;
-  padding:9px 14px;
-  background:rgba(13,13,31,0.7);
-  border-left:2px solid var(--dim);font-size:13px;
-  font-family:'Space Mono',monospace;
-}
-.podium-row.first{border-left-color:var(--gold);background:rgba(255,215,0,0.05);box-shadow:inset 0 0 20px rgba(255,215,0,0.03);}
-.podium-row .rank{font-size:18px;width:26px;text-align:center;}
-.podium-row .pname{flex:1;font-weight:700;}
-.podium-row .ppts{color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;text-shadow:0 0 8px #ffd70044;}
-
-/* ══ TOAST ══ */
-#toast{
-  position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(8px);
-  background:rgba(8,8,21,0.95);
-  border:1px solid rgba(255,255,255,0.08);border-top:1px solid rgba(0,255,163,0.3);
-  color:var(--text);padding:8px 16px;
-  font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;
-  opacity:0;transition:opacity 0.2s,transform 0.2s;
-  pointer-events:none;z-index:100;white-space:nowrap;
-  backdrop-filter:blur(20px);
-}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-@media (pointer:coarse){#dpad{display:block;}}
-@media (pointer:fine){#dpad{display:block;}}
-@media (max-width:400px){#hud{font-size:9px;}.hi-label{display:none;}}
 </style>
 </head>
 <body>
-
-<!-- ══ MENU ══ -->
-<div id="s-menu" class="screen active">
-  <div class="logo">
-    <span class="logo-icon">🏺</span>
-    <div class="logo-main">متاهة الكنوز</div>
-    <div class="logo-sub">maze · online · v4</div>
-  </div>
-  <div class="panel">
-    <div class="field-wrap">
-      <span class="field-lbl">اسمك</span>
-      <input class="field" id="nameInput" placeholder="أدخل اسمك..." maxlength="16">
-    </div>
-    <button class="btn-main" id="btnCreate">إنشاء غرفة</button>
-    <div class="row-sep">أو انضم</div>
-    <div class="join-row">
-      <input class="field" id="joinCode" placeholder="XXXX" maxlength="6" style="text-transform:uppercase">
-      <button class="btn-line" id="btnJoin">← انضم</button>
-    </div>
-    <div class="row-sep">أو</div>
-    <button class="btn-line" id="btnSolo">solo · منفرد</button>
-  </div>
+<div id="game-container">
+  <canvas id="gameCanvas"></canvas>
 </div>
-
-<!-- ══ CREATE ══ -->
-<div id="s-create" class="screen">
-  <div class="top-bar">
-    <div class="btn-back" id="btnBackCreate">←</div>
-    <div class="top-bar-title">إعدادات الغرفة</div>
-  </div>
-  <div class="cfg-panel">
-    <div class="cfg-grid">
-      <div class="cfg-item">
-        <label>حجم المتاهة</label>
-        <select id="cfgSize">
-          <option value="sm">صغيرة 11×11</option>
-          <option value="md">متوسطة 17×17</option>
-          <option value="lg" selected>كبيرة 25×25</option>
-          <option value="xl">ضخمة 31×31</option>
-          <option value="xxl">عملاقة 41×41</option>
-        </select>
-      </div>
-      <div class="cfg-item">
-        <label>أقصى لاعبين</label>
-        <select id="cfgMaxPlayers">
-          <option value="2">2</option>
-          <option value="4" selected>4</option>
-          <option value="6">6</option>
-          <option value="8">8</option>
-          <option value="10">10</option>
-        </select>
-      </div>
-    </div>
-    <div class="cfg-item">
-      <label>نوع اللعبة</label>
-      <select id="cfgGameMode">
-        <option value="ffa">فردي – كل واحد لنفسه</option>
-        <option value="coop">🤝 تعاوني – فرق من اتنين</option>
-      </select>
-    </div>
-    <div id="coopHint" style="display:none" class="coop-info">
-      كل اتنين فريق — الداشر يجمع الكنوز، الحيطة تسد الطريق
-    </div>
-    <div class="cfg-grid">
-      <div class="cfg-item">
-        <label>وقت المباراة</label>
-        <select id="cfgTime">
-          <option value="60">60s</option>
-          <option value="120" selected>120s</option>
-          <option value="180">180s</option>
-          <option value="300">300s</option>
-          <option value="0">∞</option>
-        </select>
-      </div>
-      <div class="cfg-item">
-        <label>سكور الفوز</label>
-        <select id="cfgWinScore">
-          <option value="0">∞</option>
-          <option value="300">300</option>
-          <option value="500" selected>500</option>
-          <option value="1000">1000</option>
-          <option value="2000">2000</option>
-        </select>
-      </div>
-      <div class="cfg-item">
-        <label>cooldown كسر</label>
-        <select id="cfgBreak">
-          <option value="3" selected>3s</option>
-          <option value="5">5s</option>
-          <option value="10">10s</option>
-          <option value="0">حر</option>
-        </select>
-      </div>
-      <div class="cfg-item">
-        <label>countdown</label>
-        <select id="cfgCountdown">
-          <option value="3" selected>3s</option>
-          <option value="5">5s</option>
-          <option value="10">10s</option>
-        </select>
-      </div>
-    </div>
-    <button class="btn-main" id="btnConfirmCreate">إنشاء الغرفة →</button>
-  </div>
+<div id="game-overlay">
+  <h1>Treasure Maze</h1>
+  <p>Find the treasure before time runs out!</p>
+  <button onclick="startGame()">Start Game</button>
 </div>
-
-<!-- ══ LOBBY ══ -->
-<div id="s-lobby" class="screen">
-  <div class="lobby-panel">
-    <div class="code-lbl">كود الغرفة</div>
-    <div id="roomCodeDisplay">----</div>
-    <div id="lobbyPlayers"></div>
-    <div id="lobbySettings"></div>
-    <button class="btn-main" id="btnStartGame" style="display:none">▶ ابدأ اللعبة</button>
-    <div id="waitingMsg" style="color:var(--dim);font-size:11px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;">waiting for host...</div>
-    <button class="btn-line" id="btnLeaveLobby">مغادرة</button>
-  </div>
-</div>
-
-<!-- ══ COUNTDOWN ══ -->
-<div id="s-countdown" class="screen">
-  <div id="cdNum">3</div>
-  <div class="cd-sub">استعد</div>
-</div>
-
-<!-- ══ GAME ══ -->
-<div id="s-game" class="screen" style="padding:0;gap:0;">
-  <div id="hud">
-    <div class="hitem hi-time">
-      <span class="hi-label">T</span>
-      <span class="hi-val" id="hudTime">--</span>
-    </div>
-    <div class="hitem">
-      <span class="hi-label">💎</span>
-      <span class="hi-val" id="hudCollected">0/0</span>
-    </div>
-    <div class="hitem">
-      <span class="hi-label">PTS</span>
-      <span class="hi-val" id="hudScore">0</span>
-    </div>
-    <div class="hitem hi-break">
-      <span class="hi-label">BRK</span>
-      <span class="hi-val ready" id="hudBreak">RDY</span>
-    </div>
-    <div class="hitem" id="hudRole"></div>
-  </div>
-  <div id="timerBar"><div id="timerFill"></div></div>
-  <div id="wrap">
-    <canvas id="gc"></canvas>
-    <div id="scoreboard"></div>
-    <canvas id="minimap" width="80" height="80"></canvas>
-    <div id="brkInd">BRK · RDY</div>
-  </div>
-  <div id="dpad">
-    <div id="dpad-center"></div>
-    <div class="db" id="db-u">↑</div>
-    <div class="db" id="db-d">↓</div>
-    <div class="db" id="db-l">←</div>
-    <div class="db" id="db-r">→</div>
-  </div>
-</div>
-
-<!-- ══ END ══ -->
-<div id="s-end" class="screen" style="padding:14px;gap:12px;">
-  <div class="end-ttl" id="endTitle">انتهت اللعبة</div>
-  <div class="lobby-panel" style="width:min(320px,90vw)">
-    <div id="endPodium"></div>
-    <button class="btn-main" id="btnPlayAgain" style="display:none">↺ لعبة جديدة</button>
-    <button class="btn-line" id="btnBackMenu">القائمة الرئيسية</button>
-  </div>
-</div>
-
-<div id="toast"></div>
+<div id="score-board">Score: <span id="score">0</span></div>
+<div id="message-display"></div>
 
 <script>
-// ══════════════════════════════════════════════════
-//  CONSTANTS & CONFIG
-// ══════════════════════════════════════════════════
-const ABLY_KEY = 'UcDcBw.YJJl6g:LDwkET05nlae7VeirAz44uL8hE16cLZ8MyrSFwCnolk';
-const CELL = 36;
-const SIZE_MAP = { sm:[11,11], md:[17,17], lg:[25,25], xl:[31,31], xxl:[41,41] };
-const PLAYER_COLORS = ['#5588ff','#ff5566','#44dd88','#ffaa33','#cc55ff','#55ccff','#ff8833','#88ff44'];
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-// Animal emojis for players (in order) - matching user spec
-const PLAYER_ANIMALS = ['🐸','🐱','🐭','🦄','🪼','🐸','🐱','🐭'];
+const CELL = 40; // Cell size in pixels
+const MAZE_WIDTH = 25; // Cells
+const MAZE_HEIGHT = 15; // Cells
 
-// Team wall colors for coop mode (matching animal theme)
-// 🐭=white/gray, 🐱=yellow, 🦄=purple, 🐒=orange, 🐸=green, 🦊=orange, 🐼=white, 🐧=blue
-const ANIMAL_TEAM_WALL_COLORS = {
-  '🐭': '#c0c0c0',
-  '🐱': '#f0d060',
-  '🦄': '#cc88ff',
-  '🐒': '#ff9944',
-  '🐸': '#44cc44',
-  '🦊': '#ff7733',
-  '🐼': '#dddddd',
-  '🐧': '#4499ff',
-};
+canvas.width = MAZE_WIDTH * CELL;
+canvas.height = MAZE_HEIGHT * CELL;
+
+const TREASURE_COLOR = '#ffd700'; // Gold
+const WALL_COLOR = '#3a3a3a'; // Dark grey
+const PATH_COLOR = '#0b0614'; // Matching background for path
+
+const RUNNER_EMOJIS = ["🐸", "🐱", "🐭", "🦄", "🪼"];
+const WALL_EMOJIS_BY_RUNNER_INDEX = ["🟩", "🟨", "⬜", "🟪", "🟦"];
 
 const TREASURE_DEF = [
-  {sym:'💎', val:50,  glow:'#44ddff'},
-  {sym:'💰', val:30,  glow:'#ffaa22'},
-  {sym:'👑', val:100, glow:'#ffdd00'},
-  {sym:'❤️', val:75,  glow:'#ff3355'},
-  {sym:'🔮', val:60,  glow:'#cc44ff'},
-  {sym:'⭐', val:40,  glow:'#ffff44'},
-  {sym:'🍀', val:35,  glow:'#44ff88'},
-  {sym:'🔑', val:80,  glow:'#ffcc44'},
+  {x: 1, y: 1}, {x: MAZE_WIDTH - 2, y: 1}, {x: 1, y: MAZE_HEIGHT - 2},
+  {x: MAZE_WIDTH - 2, y: MAZE_HEIGHT - 2}
 ];
+let treasures = [];
 
-// ══════════════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════════════
-let ably, channel;
-let myId = Math.random().toString(36).slice(2,10);
-let myName = '';
-let isHost = false;
-let roomCode = '';
-let roomConfig = {};
-
-// Game state
-let maze = [], COLS = 25, ROWS = 25;
-let MW, MH;
-let treasures = [];  // {c,r,sym,val,glow,got}
-let players = {};    // id -> {name,col,row,px,py,score,color,dash,trail,breakCD}
+let maze = [];
+let players = {};
+let myId = null;
 let myPlayer = null;
-let particles = [], floats = [];
-let gameRunning = false;
-let gameTimer = 0;   // seconds remaining
-let timerInterval = null;
-let winScore = 0;
-let breakCooldownFrames = 0;
-let BREAK_COOLDOWN_FRAMES = 180;
-let raf;
-let pendingDash = null;
-let localDash = null; // my local dash animation
-let totalTreasures = 0;
+let gameStarted = false;
+let roomConfig = { gameMode: 'solo' }; // Default to solo
+let teamColors = ['#55aaff', '#ff55aa', '#aaff55', '#ffaa55', '#55ffa0']; // Example team colors
 
-// Canvas
-let gc, ctx, VW, VH;
-
-// Touch
-let touchStartX = 0, touchStartY = 0;
-
-// Wall tint cache (computed once per game in coop mode)
-let cachedWallTints = null;
-
-// ══════════════════════════════════════════════════
-//  SCREEN MANAGER
-// ══════════════════════════════════════════════════
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('s-' + id).classList.add('active');
-}
-
-function toast(msg, dur=2500) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), dur);
-}
-
-// ══════════════════════════════════════════════════
-//  ABLY SETUP
-// ══════════════════════════════════════════════════
-async function connectAbly() {
-  if (ably) return;
-  ably = new Ably.Realtime({ key: ABLY_KEY, clientId: myId });
-  await new Promise(r => ably.connection.once('connected', r));
-}
-
-function joinChannel(code) {
-  if (channel) channel.detach();
-  channel = ably.channels.get('maze-room-' + code);
-  channel.subscribe(handleMessage);
-  channel.presence.enter({ name: myName, isHost });
-  channel.presence.subscribe(handlePresence);
-}
-
-function pub(type, data = {}) {
-  if (!channel) return;
-  channel.publish(type, { from: myId, name: myName, ...data });
-}
-
-function handlePresence(msg) {
-  if (msg.action === 'enter' || msg.action === 'update') {
-    // Update lobby
-    refreshLobby();
-  }
-  if (msg.action === 'leave') {
-    if (players[msg.clientId]) {
-      toast(`${players[msg.clientId].name} غادر اللعبة`);
-      delete players[msg.clientId];
+// Utility function to lighten a color
+function lightenColor(col, amt) {
+    var usePound = false;
+    if (col[0] == "#") {
+        col = col.slice(1);
+        usePound = true;
     }
-    refreshLobby();
-  }
+    var num = parseInt(col, 16);
+    var r = (num >> 16) + amt;
+    if (r > 255) r = 255;
+    else if (r < 0) r = 0;
+    var b = ((num >> 8) & 0x00FF) + amt;
+    if (b > 255) b = 255;
+    else if (b < 0) b = 0;
+    var g = (num & 0x0000FF) + amt;
+    if (g > 255) g = 255;
+    else if (g < 0) g = 0;
+    return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16);
 }
 
-// ══════════════════════════════════════════════════
-//  MESSAGE HANDLERS
-// ══════════════════════════════════════════════════
-function handleMessage(msg) {
-  const d = msg.data;
-  switch (msg.name) {
-    case 'game-start':    onGameStart(d); break;
-    case 'countdown':     onCountdown(d); break;
-    case 'player-move':   onPlayerMove(d); break;
-    case 'treasure-took': onTreasureTook(d); break;
-    case 'game-end':      onGameEnd(d); break;
-    case 'play-again':    onPlayAgain(d); break;
-    case 'player-score':  onPlayerScore(d); break;
-  }
-}
-
-// ══════════════════════════════════════════════════
-//  LOBBY
-// ══════════════════════════════════════════════════
-async function refreshLobby() {
-  if (!channel) return;
-  try {
-    const members = await channel.presence.get();
-    const lp = document.getElementById('lobbyPlayers');
-    lp.innerHTML = members.map(m => `
-      <div class="player-row">
-        <span>${m.data?.isHost ? '<span class="crown">👑</span>' : '👤'} ${m.data?.name || m.clientId}</span>
-        ${m.clientId === myId ? '<span class="ready">أنت</span>' : ''}
-      </div>
-    `).join('');
-
-    // Show start button only for host
-    const startBtn = document.getElementById('btnStartGame');
-    const waitMsg = document.getElementById('waitingMsg');
-    if (isHost) {
-      startBtn.style.display = members.length >= 1 ? 'block' : 'none';
-      waitMsg.style.display = 'none';
-    } else {
-      startBtn.style.display = 'none';
-      waitMsg.style.display = 'block';
-    }
-  } catch(e) {}
-}
-
-// ══════════════════════════════════════════════════
-//  ROOM CODE GENERATOR
-// ══════════════════════════════════════════════════
-function genCode() {
-  return Math.random().toString(36).slice(2,6).toUpperCase();
-}
-
-// ══════════════════════════════════════════════════
-//  MAZE GENERATION
-// ══════════════════════════════════════════════════
-function genMaze(cols, rows) {
-  const m = Array.from({length:rows}, () => new Uint8Array(cols).fill(1));
-  const visited = Array.from({length:rows}, () => new Uint8Array(cols));
-
-  function carve(c,r) {
-    visited[r][c]=1; m[r][c]=0;
-    const dirs=[[0,-2],[0,2],[-2,0],[2,0]].sort(()=>Math.random()-.5);
-    for(const[dc,dr] of dirs){
-      const nc=c+dc, nr=r+dr;
-      if(nc>0&&nc<cols-1&&nr>0&&nr<rows-1&&!visited[nr][nc]){
-        m[r+dr/2][c+dc/2]=0; carve(nc,nr);
-      }
-    }
-  }
-  carve(1,1);
-
-  // Anti-trap: ensure every floor cell has ≥2 open neighbors
-  for(let pass=0;pass<3;pass++){
-    for(let r=1;r<rows-1;r++){
-      for(let c=1;c<cols-1;c++){
-        if(m[r][c]===0){
-          const adj=[[0,-1],[0,1],[-1,0],[1,0]];
-          const open=adj.filter(([dc,dr])=>m[r+dr]?.[c+dc]===0);
-          if(open.length<=1){
-            const walls=adj.filter(([dc,dr])=>r+dr>=1&&r+dr<rows-1&&c+dc>=1&&c+dc<cols-1&&m[r+dr][c+dc]===1);
-            if(walls.length){
-              const[dc,dr]=walls[Math.floor(Math.random()*walls.length)];
-              m[r+dr][c+dc]=0;
-            }
-          }
-        }
-      }
-    }
-  }
-  // Extra loops
-  for(let i=0;i<Math.floor(cols*rows/10);i++){
-    const r=1+Math.floor(Math.random()*(rows-2));
-    const c=1+Math.floor(Math.random()*(cols-2));
-    const side=Math.floor(Math.random()*4);
-    const dr=[0,0,1,-1][side], dc=[1,-1,0,0][side];
-    if(r+dr>=1&&r+dr<rows-1&&c+dc>=1&&c+dc<cols-1) m[r+dr][c+dc]=0;
-  }
-  return m;
-}
-
-function placeTreasures(mazeData, cols, rows) {
-  const floor=[];
-  for(let r=0;r<rows;r++)
-    for(let c=0;c<cols;c++)
-      if(mazeData[r][c]===0) floor.push({c,r});
-  floor.sort(()=>Math.random()-.5);
-  const n=Math.floor(floor.length*.3);
-  return floor.slice(0,n).map(({c,r})=>{
-    const def=TREASURE_DEF[Math.floor(Math.random()*TREASURE_DEF.length)];
-    return {c,r,...def,got:false,t:Math.random()*Math.PI*2};
-  });
-}
-
-// Serialize maze to string for network
-function mazeToStr(m,cols,rows){ return cols+','+rows+','+Array.from(m,(r)=>Array.from(r).join('')).join('|'); }
-function strToMaze(s){
-  const parts=s.split(',');
-  const cols=+parts[0], rows=+parts[1];
-  const rows_data=parts[2].split('|');
-  return {maze:rows_data.map(r=>new Uint8Array(r.split('').map(Number))), cols, rows};
-}
-function treasuresToStr(ts){ return ts.map(t=>`${t.c},${t.r},${t.sym},${t.val},${t.glow}`).join(';'); }
-function strToTreasures(s){
-  if(!s) return [];
-  return s.split(';').map(p=>{
-    const[c,r,sym,val,glow]=p.split(',');
-    return {c:+c,r:+r,sym,val:+val,glow,got:false,t:Math.random()*Math.PI*2};
-  });
-}
-
-// ══════════════════════════════════════════════════
-//  GAME START
-// ══════════════════════════════════════════════════
-async function hostStartGame() {
-  const [cols,rows] = SIZE_MAP[roomConfig.size];
-  const mazeData = genMaze(cols,rows);
-  const trs = placeTreasures(mazeData, cols, rows);
-
-  // Assign spawn points - coop teammates spawn adjacent
-  const members = await channel.presence.get();
-  let spawnPoints;
-  if(roomConfig.gameMode==='coop'){
-    // For each pair, find adjacent floor cells
-    const teamCount=Math.ceil(members.length/2);
-    const baseSpawns=getSpawnPoints(mazeData,cols,rows,teamCount);
-    spawnPoints=[];
-    baseSpawns.forEach(base=>{
-      spawnPoints.push(base); // dasher
-      // Find adjacent floor cell for wall player
-      const adj=[[1,0],[-1,0],[0,1],[0,-1]].find(([dc,dr])=>{
-        const nc=base.c+dc, nr=base.r+dr;
-        return nc>=1&&nc<cols-1&&nr>=1&&nr<rows-1&&mazeData[nr][nc]===0;
-      });
-      spawnPoints.push(adj ? {c:base.c+(adj[0]),r:base.r+(adj[1])} : base);
-    });
-  } else {
-    spawnPoints = getSpawnPoints(mazeData,cols,rows,members.length);
-  }
-  const playerSpawns = {};
-  members.forEach((m,i)=>{
-    playerSpawns[m.clientId] = spawnPoints[i] || {c:1,r:1};
-  });
-
-  pub('game-start', {
-    maze: mazeToStr(mazeData,cols,rows),
-    treasures: treasuresToStr(trs),
-    config: roomConfig,
-    spawns: playerSpawns,
-    playerList: members.map((m,i)=>({
-      id:m.clientId, name:m.data?.name||m.clientId, color:PLAYER_COLORS[i%PLAYER_COLORS.length],
-      animal: PLAYER_ANIMALS[i%PLAYER_ANIMALS.length],
-      teamId: roomConfig.gameMode==='coop' ? Math.floor(i/2) : i,
-      role:   roomConfig.gameMode==='coop' ? (i%2===0?'dasher':'wall') : 'dasher'
-    }))
-  });
-}
-
-function getSpawnPoints(mazeData, cols, rows, n) {
-  // Pick spread-out floor cells for spawns
-  const candidates=[];
-  for(let r=1;r<rows-1;r++)
-    for(let c=1;c<cols-1;c++)
-      if(mazeData[r][c]===0) candidates.push({c,r});
-  candidates.sort(()=>Math.random()-.5);
-  // Try to spread: take corners first
-  const corners=[
-    {c:1,r:1},{c:cols-2,r:1},{c:1,r:rows-2},{c:cols-2,r:rows-2}
-  ].filter(pt=>mazeData[pt.r][pt.c]===0);
-  const result=[...corners];
-  for(const p of candidates){
-    if(result.length>=n) break;
-    if(!result.some(r=>Math.abs(r.c-p.c)+Math.abs(r.r-p.r)<Math.floor((cols+rows)/6)))
-      result.push(p);
-  }
-  while(result.length<n) result.push(candidates[result.length]||{c:1,r:1});
-  return result;
-}
-
-function onCountdown(d) {
-  showScreen('countdown');
-  let n = d.from_host_n || roomConfig.countdown || 3;
-  const el = document.getElementById('cdNum');
-  el.textContent = n;
-  const iv = setInterval(()=>{
-    n--;
-    if(n<=0){ clearInterval(iv); }
-    else el.textContent = n;
-  },1000);
-}
-
-function onGameStart(d) {
-  // Parse maze
-  const parsed = strToMaze(d.maze);
-  maze = parsed.maze; COLS = parsed.cols; ROWS = parsed.rows;
-  MW = COLS * CELL; MH = ROWS * CELL;
-
-  treasures = strToTreasures(d.treasures);
-  totalTreasures = treasures.length;
-  roomConfig = d.config;
-  BREAK_COOLDOWN_FRAMES = (roomConfig.breakSecs||3)*60;
-  winScore = +roomConfig.winScore||0;
-
-  // Init players
-  players = {};
-  d.playerList.forEach(p => {
-    const spawn = d.spawns[p.id] || {c:1,r:1};
-    players[p.id] = {
-      name:p.name, color:p.color,
-      animal: p.animal || '🐭',
-      col:spawn.c, row:spawn.r,
-      px:spawn.c*CELL+CELL/2, py:spawn.r*CELL+CELL/2,
-      score:0, dash:null, trail:[],
-      breakCD:0,
-      teamId: p.teamId ?? p.id,
-      role: p.role || 'dasher'
-    };
-  });
-  myPlayer = players[myId];
-
-  // Precompute wall tints for coop mode (done once)
-  cachedWallTints = null;
-  if(roomConfig.gameMode==='coop'){
-    cachedWallTints={};
-    // Build team -> dasher animal map
-    const teamDasherAnimal={};
-    Object.values(players).forEach(p=>{
-      if(p.role==='dasher') teamDasherAnimal[p.teamId]=p.animal||'🐭';
-    });
-    // Each team: find the dasher spawn as "team center"
-    const teamCenters=[];
-    const seenTeam={};
-    Object.values(players).forEach(p=>{
-      if(p.role==='dasher' && !(p.teamId in seenTeam)){
-        seenTeam[p.teamId]=true;
-        teamCenters.push({col:p.col,row:p.row,animal:p.animal||'🐭'});
-      }
-    });
-    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
-      if(maze[r][c]!==1) continue;
-      let minD=Infinity,ani=null;
-      for(const t of teamCenters){ const d=Math.abs(t.col-c)+Math.abs(t.row-r); if(d<minD){minD=d;ani=t.animal;} }
-      if(minD<=14) cachedWallTints[r*1000+c]=ani;
-    }
-  }
-
-  // Canvas setup
-  setupCanvas();
-
-  particles=[]; floats=[];
-  pendingDash=null; localDash=null;
-  gameRunning=false;
-
-  // Start countdown then game
-  let n = +roomConfig.countdown || 3;
-  showScreen('countdown');
-  document.getElementById('cdNum').textContent = n;
-  sfxCountdown(n);
-  const iv = setInterval(()=>{
-    n--;
-    if(n<=0){
-      clearInterval(iv);
-      document.getElementById('cdNum').textContent='🚀';
-      sfxCountdown(0);
-      setTimeout(startActualGame,400);
-    } else {
-      document.getElementById('cdNum').textContent = n;
-      sfxCountdown(n);
-    }
-  },1000);
-}
-
-function startActualGame() {
-  gameRunning = true;
-  showScreen('game');
-  document.getElementById('scoreboard').style.display='block';
-  document.getElementById('brkInd').style.display='block';
-
-  // Timer
-  gameTimer = +roomConfig.gameSecs || 0;
-  updateTimerUI();
-  if(gameTimer>0){
-    timerInterval = setInterval(()=>{
-      gameTimer--;
-      updateTimerUI();
-      if(gameTimer<=0){
-        clearInterval(timerInterval);
-        if(isHost) pub('game-end',{ reason:'time', scores: getScores() });
-      }
-    },1000);
-  }
-
-  cancelAnimationFrame(raf);
-  raf = requestAnimationFrame(gameLoop);
-}
-
-function updateTimerUI(){
-  const el=document.getElementById('hudTime');
-  const fill=document.getElementById('timerFill');
-  if(+roomConfig.gameSecs>0){
-    el.textContent=gameTimer+'s';
-    fill.style.width=(gameTimer/+roomConfig.gameSecs*100)+'%';
-    fill.style.background=gameTimer<15?'#ff4444':gameTimer<30?'#ffaa22':'var(--gold)';
-  } else {
-    el.textContent='∞';
-    fill.style.width='100%';
-  }
-}
-
-// ══════════════════════════════════════════════════
-//  CANVAS
-// ══════════════════════════════════════════════════
-function setupCanvas() {
-  gc = document.getElementById('gc');
-  ctx = gc.getContext('2d');
-  const wrap = document.getElementById('wrap');
-  const ww = window.innerWidth;
-  // HUD=32px, timerBar=2px, dpad visible on touch=136px+margin, else ~0
-  const hasTouch = window.matchMedia('(pointer:coarse)').matches || true;
-  const dpadH = hasTouch ? 136 : 0;
-  const wh = window.innerHeight - 34 - dpadH;
-  wrap.style.width  = ww + 'px';
-  wrap.style.height = wh + 'px';
-  gc.width  = ww;
-  gc.height = wh;
-  VW = ww; VH = wh;
-}
-
-// ══════════════════════════════════════════════════
-//  GAME LOOP
-// ══════════════════════════════════════════════════
-function gameLoop() {
-  if(!gameRunning){ return; }
-  updateLocal();
-  drawGame();
-  raf = requestAnimationFrame(gameLoop);
-}
-
-function updateLocal() {
-  if(!myPlayer) return;
-
-  // Break cooldown (only for dasher)
-  if(myPlayer.role!=='wall' && myPlayer.breakCD>0) myPlayer.breakCD--;
-
-  // Wall player uses dash slot for smooth step animation
-  if(myPlayer.role==='wall' && myPlayer.dash){
-    myPlayer.dash.t++;
-    const pp=Math.min(myPlayer.dash.t/myPlayer.dash.dur,1);
-    const e=1-Math.pow(1-pp,3);
-    myPlayer.px=myPlayer.dash.fromPx+(myPlayer.dash.toPx-myPlayer.dash.fromPx)*e;
-    myPlayer.py=myPlayer.dash.fromPy+(myPlayer.dash.toPy-myPlayer.dash.fromPy)*e;
-    if(myPlayer.dash.t>=myPlayer.dash.dur){
-      myPlayer.px=myPlayer.dash.toPx; myPlayer.py=myPlayer.dash.toPy; myPlayer.dash=null;
-    }
-  }
-
-  // Local dash animation (dasher)
-  if(localDash){
-    localDash.t++;
-    const p=Math.min(localDash.t/localDash.dur,1);
-    const e=1-Math.pow(1-p,3);
-    myPlayer.px=localDash.fromPx+(localDash.toPx-localDash.fromPx)*e;
-    myPlayer.py=localDash.fromPy+(localDash.toPy-localDash.fromPy)*e;
-
-    // Collect along path
-    const passed=Math.ceil(p*localDash.path.length);
-    for(let i=0;i<passed;i++){
-      const cell=localDash.path[i];
-      if(!cell.checked){
-        cell.checked=true;
-        tryCollect(cell.c,cell.r);
-      }
-    }
-
-    // Trail fade
-    const tp=localDash.t/localDash.dur;
-    localDash.trail.forEach((t,i)=>{ t.life=Math.max(0,1-(tp-i/localDash.trail.length)*2.5); });
-
-    if(localDash.t>=localDash.dur){
-      myPlayer.px=localDash.toPx; myPlayer.py=localDash.toPy;
-      // Collect remaining
-      localDash.path.forEach(cell=>{ if(!cell.checked){ cell.checked=true; tryCollect(cell.c,cell.r); }});
-      localDash=null;
-      // Broadcast position
-      pubMove();
-      if(pendingDash){ doLocalDash(pendingDash); pendingDash=null; }
-    }
-  }
-
-  // Treasures glow pulse (slow)
-  treasures.forEach(t=>t.t+=0.02);
-
-  // Particles
-  particles=particles.filter(p=>{
-    p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.life-=p.decay; return p.life>0;
-  });
-  floats=floats.filter(f=>{ f.y-=0.6; f.life-=0.02; return f.life>0; });
-
-  // HUD
-  updateGameHUD();
-}
-
-function pubMove() {
-  if(!myPlayer) return;
-  pub('player-move',{ col:myPlayer.col, row:myPlayer.row, px:myPlayer.px, py:myPlayer.py, role:myPlayer.role, teamId:myPlayer.teamId });
-}
-
-function onPlayerMove(d) {
-  if(d.from===myId) return;
-  if(!players[d.from]) return;
-  const p=players[d.from];
-  // Update role/teamId if included
-  if(d.role) p.role=d.role;
-  if(d.teamId!==undefined) p.teamId=d.teamId;
-  // Animate other player smoothly
-  const fromPx=p.px, fromPy=p.py;
-  const toPx=d.col*CELL+CELL/2, toPy=d.row*CELL+CELL/2;
-  p.col=d.col; p.row=d.row;
-  p.dash={ fromPx, fromPy, toPx, toPy, t:0, dur:12 };
-}
-
-function onPlayerScore(d) {
-  if(players[d.from]) players[d.from].score=d.score;
-}
-
-function onTreasureTook(d) {
-  const t=treasures.find(t=>t.c===d.c&&t.r===d.r&&!t.got);
-  if(t) t.got=true;
-}
-
-// ══════════════════════════════════════════════════
-//  INPUT / DASH
-// ══════════════════════════════════════════════════
-const held={};
-document.addEventListener('keydown',e=>{
-  if(held[e.key]) return; held[e.key]=true;
-  const dir=keyToDir(e.key);
-  if(dir) tryInput(dir);
-  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
-});
-document.addEventListener('keyup',e=>{ held[e.key]=false; });
-
-function keyToDir(k){
-  if(k==='ArrowUp'   ||k==='w'||k==='W') return [0,-1];
-  if(k==='ArrowDown' ||k==='s'||k==='S') return [0,1];
-  if(k==='ArrowLeft' ||k==='a'||k==='A') return [-1,0];
-  if(k==='ArrowRight'||k==='d'||k==='D') return [1,0];
-  return null;
-}
-
-function tryInput(dir){
-  if(!gameRunning||!myPlayer) return;
-  // Wall role: move step by step, no dash, no collect
-  if(myPlayer.role==='wall'){
-    doWallMove(dir);
-    return;
-  }
-  if(localDash){ pendingDash=dir; return; }
-  doLocalDash(dir);
-}
-
-function doWallMove(dir){
-  const[dc,dr]=dir;
-  const nc=myPlayer.col+dc, nr=myPlayer.row+dr;
-  if(nc<0||nc>=COLS||nr<0||nr>=ROWS) return;
-  if(maze[nr][nc]===1) return; // wall players can't break walls
-
-  // Check collision with own team dasher (block if same team)
-  // Other teams pass through wall player
-  const blockedByTeammate = Object.values(players).some(p=>
-    p!==myPlayer && p.teamId===myPlayer.teamId && p.col===nc && p.row===nr
-  );
-  if(blockedByTeammate){ spawnBurst(nc*CELL+CELL/2,nr*CELL+CELL/2,'#ff8844',4); return; }
-
-  myPlayer.col=nc; myPlayer.row=nr;
-  // Smooth pixel movement
-  const toPx=nc*CELL+CELL/2, toPy=nr*CELL+CELL/2;
-  myPlayer.dash={ fromPx:myPlayer.px, fromPy:myPlayer.py, toPx, toPy, t:0, dur:10 };
-  pubMove();
-}
-
-function doLocalDash(dir){
-  const[dc,dr]=dir;
-  let c=myPlayer.col, r=myPlayer.row;
-
-  // Check wall immediately ahead
-  const wc=c+dc, wr=r+dr;
-  if(wc>=0&&wc<COLS&&wr>=0&&wr<ROWS&&maze[wr][wc]===1){
-    if(myPlayer.breakCD<=0){
-      // Break!
-      const bc=wc+dc, br=wr+dr;
-      if(bc>=1&&bc<COLS-1&&br>=1&&br<ROWS-1){
-        maze[wr][wc]=0;
-        myPlayer.breakCD=BREAK_COOLDOWN_FRAMES;
-        sfxBreakWall();
-        spawnBurst(wc*CELL+CELL/2,wr*CELL+CELL/2,'#e8c87a',15);
-        floats.push({x:wc*CELL+CELL/2,y:wr*CELL+CELL/2-20,text:'💥',col:'#ff8844',life:1.5});
-        // Continue dash after break
-      } else return;
-    } else {
-      // Flash
-      spawnBurst(wc*CELL+CELL/2,wr*CELL+CELL/2,'#ff4444',5);
-      return;
-    }
-  }
-
-  // Slide to wall - stop also if hitting own team wall player
-  while(true){
-    const nc=c+dc, nr=r+dr;
-    if(nc<0||nc>=COLS||nr<0||nr>=ROWS||maze[nr][nc]===1) break;
-    // Check if own team wall player is standing on next cell
-    const wallBlocker = Object.values(players).find(p=>
-      p.role==='wall' && p.teamId===myPlayer.teamId && p.col===nc && p.row===nr
-    );
-    if(wallBlocker) break; // treat wall player like a wall for their own dasher
-    c=nc; r=nr;
-  }
-  if(c===myPlayer.col&&r===myPlayer.row){ pendingDash=null; return; }
-
-  // Build path
-  const path=[];
-  let tc=myPlayer.col,tr=myPlayer.row;
-  while(tc!==c||tr!==r){
-    tc+=dc; tr+=dr;
-    path.push({c:tc,r:tr,checked:false});
-  }
-
-  const fromPx=myPlayer.px, fromPy=myPlayer.py;
-  const toPx=c*CELL+CELL/2, toPy=r*CELL+CELL/2;
-  const dist=Math.abs(c-myPlayer.col)+Math.abs(r-myPlayer.row);
-  const dur=Math.max(6,Math.min(dist*1.8,20));
-
-  myPlayer.col=c; myPlayer.row=r;
-  sfxDash();
-  localDash={fromPx,fromPy,toPx,toPy,t:0,dur,path,trail:[...path.map(p=>({...p,life:1}))]};
-}
-
-function tryCollect(c,r){
-  const t=treasures.find(t=>t.c===c&&t.r===r&&!t.got);
-  if(!t) return;
-  t.got=true;
-  myPlayer.score+=t.val;
-  sfxCollect(t.val);
-  spawnBurst(myPlayer.px,myPlayer.py,t.glow,12);
-  floats.push({x:myPlayer.px,y:myPlayer.py-20,text:'+'+t.val,col:t.glow,life:1});
-  // Broadcast
-  pub('treasure-took',{c,r});
-  pub('player-score',{score:myPlayer.score});
-  // Check win
-  if(winScore>0&&myPlayer.score>=winScore&&isHost){
-    clearInterval(timerInterval);
-    pub('game-end',{reason:'score',winner:myId,scores:getScores()});
-  }
-}
-
-function getScores(){
-  if(roomConfig.gameMode==='coop'){
-    // Aggregate by team
-    const teams={};
-    Object.entries(players).forEach(([id,p])=>{
-      if(!teams[p.teamId]) teams[p.teamId]={score:0,members:[],color:p.color};
-      teams[p.teamId].score+=p.score;
-      teams[p.teamId].members.push(p);
-    });
-    return Object.values(teams)
-      .sort((a,b)=>b.score-a.score)
-      .map(t=>({
-        name: t.members.map(p=>`${p.animal||'🐭'}${p.name}`).join(' & '),
-        score:t.score, color:t.color
-      }));
-  }
-  return Object.entries(players).map(([id,p])=>({id,name:p.name,score:p.score,color:p.color}))
-    .sort((a,b)=>b.score-a.score);
-}
-
-// ══════════════════════════════════════════════════
-//  DRAW
-// ══════════════════════════════════════════════════
-// Flat pixel colors per animal - matching emoji square colors
-const ANIMAL_WALL_FLAT = {
-  '🐸': '#2d7a2d',   // 🟩 green
-  '🐱': '#b08800',   // 🟨 yellow
-  '🐭': '#888899',   // ⬜ gray/white
-  '🦄': '#8833bb',   // 🟪 purple
-  '🪼': '#1155cc',   // 🟦 blue
-};
-
-function drawGame(){
-  if(!ctx||!myPlayer) return;
-
-  const offX=Math.max(0,Math.min(myPlayer.px-VW/2,MW-VW));
-  const offY=Math.max(0,Math.min(myPlayer.py-VH/2,MH-VH));
-
-  // ── Background: deep space dark ──
-  ctx.fillStyle='#04040d';
-  ctx.fillRect(0,0,VW,VH);
-
-  ctx.save();
-  ctx.translate(-offX,-offY);
-
-  // ── Floor: subtle two-tone tiles with scanline feel ──
-  const floorA='#090916', floorB='#0b0b1a';
-  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
-    if(maze[r][c]===0){
-      ctx.fillStyle=(c+r)%2===0?floorA:floorB;
-      ctx.fillRect(c*CELL,r*CELL,CELL,CELL);
-      // Subtle floor grid lines
-      ctx.fillStyle='rgba(0,255,163,0.018)';
-      ctx.fillRect(c*CELL,r*CELL,CELL,1);
-      ctx.fillRect(c*CELL,r*CELL,1,CELL);
-    }
-  }
-
-  // ── Walls: rich 3D-feeling blocks ──
-  const isCoop=roomConfig.gameMode==='coop';
-  const tick=performance.now()/1000;
-  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
-    if(maze[r][c]===1){
-      const x=c*CELL, y=r*CELL;
-      let baseCol='#111128';
-      let accentCol='rgba(0,255,163,0.06)';
-
-      if(isCoop && cachedWallTints){
-        const ani=cachedWallTints[r*1000+c];
-        if(ani && ANIMAL_WALL_FLAT[ani]){
-          baseCol=ANIMAL_WALL_FLAT[ani];
-          // Make it glow subtly
-          const h=hexToRgb(ANIMAL_WALL_FLAT[ani]);
-          accentCol=`rgba(${h.r},${h.g},${h.b},0.3)`;
-        }
-      }
-
-      // Main wall fill with subtle gradient feel
-      ctx.fillStyle=baseCol;
-      ctx.fillRect(x,y,CELL,CELL);
-
-      // Inner bevel: top-left light edge
-      ctx.fillStyle='rgba(255,255,255,0.09)';
-      ctx.fillRect(x,y,CELL,1);
-      ctx.fillRect(x,y,1,CELL);
-
-      // Bottom-right shadow edge
-      ctx.fillStyle='rgba(0,0,0,0.4)';
-      ctx.fillRect(x,y+CELL-1,CELL,1);
-      ctx.fillRect(x+CELL-1,y,1,CELL);
-
-      // Subtle inner glow on non-default walls
-      if(isCoop && cachedWallTints && cachedWallTints[r*1000+c]){
-        ctx.fillStyle=accentCol;
-        ctx.fillRect(x+1,y+1,CELL-2,CELL-2);
-      }
-    }
-  }
-
-  // ── Trails (local player dash) ──
-  if(localDash){
-    localDash.trail.forEach(t=>{
-      if(t.life<=0) return;
-      const tx=t.c*CELL, ty=t.r*CELL;
-      const col=myPlayer.color||'#00ffa3';
-      ctx.globalAlpha=t.life*0.22;
-      ctx.fillStyle=col;
-      ctx.fillRect(tx+3,ty+3,CELL-6,CELL-6);
-      // Inner bright core
-      ctx.globalAlpha=t.life*0.12;
-      ctx.fillStyle='#ffffff';
-      ctx.fillRect(tx+CELL/2-2,ty+CELL/2-2,4,4);
-    });
-    ctx.globalAlpha=1;
-  }
-
-  // ── Other players interpolation ──
-  Object.entries(players).forEach(([id,p])=>{
-    if(id===myId) return;
-    if(p.dash){
-      p.dash.t++;
-      const pp=Math.min(p.dash.t/p.dash.dur,1);
-      const e=1-Math.pow(1-pp,3);
-      p.px=p.dash.fromPx+(p.dash.toPx-p.dash.fromPx)*e;
-      p.py=p.dash.fromPy+(p.dash.toPy-p.dash.fromPy)*e;
-      if(p.dash.t>=p.dash.dur){ p.px=p.dash.toPx; p.py=p.dash.toPy; p.dash=null; }
-    }
-  });
-
-  // ── Treasures: glowing with pulsing halo ──
-  treasures.forEach(t=>{
-    if(t.got) return;
-    const tx=t.c*CELL+CELL/2;
-    const ty=t.r*CELL+CELL/2;
-    const pulse=0.5+Math.sin(t.t)*0.5;
-
-    // Outer glow halo
-    ctx.globalAlpha=0.08+pulse*0.08;
-    ctx.fillStyle=t.glow;
-    ctx.fillRect(t.c*CELL,t.r*CELL,CELL,CELL);
-
-    // Inner glow square
-    ctx.globalAlpha=0.15+pulse*0.1;
-    ctx.fillStyle=t.glow;
-    ctx.fillRect(t.c*CELL+3,t.r*CELL+3,CELL-6,CELL-6);
-    ctx.globalAlpha=1;
-
-    // Emoji
-    ctx.font=`${Math.round(CELL*.64)}px serif`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(t.sym,tx,ty+1);
-  });
-
-  // ── Players ──
-  Object.entries(players).forEach(([id,p])=>{
-    if(id===myId) return;
-    drawPlayer(p.px,p.py,p.color,p.name,false,p.role||'dasher',p.animal||'🐭');
-  });
-  if(myPlayer) drawPlayer(myPlayer.px,myPlayer.py,myPlayer.color||'#00ffa3',myPlayer.name,true,myPlayer.role||'dasher',myPlayer.animal||'🐭');
-
-  // ── Particles ──
-  particles.forEach(p=>{
-    ctx.globalAlpha=p.life*0.9;
-    ctx.fillStyle=p.col;
-    const s=Math.max(1,p.size*.6);
-    ctx.fillRect(p.x-s/2,p.y-s/2,s,s);
-  });
-  ctx.globalAlpha=1;
-
-  // ── Floats ──
-  floats.forEach(f=>{
-    ctx.globalAlpha=Math.min(f.life,1);
-    ctx.font='bold 12px Space Mono,monospace';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillStyle=f.col;
-    ctx.fillText(f.text,f.x,f.y);
-  });
-  ctx.globalAlpha=1;
-
-  ctx.restore();
-  drawMinimap(offX,offY);
-  updateScoreboard();
-}
-
-// Wall player emoji squares mapping spec
-const WALL_EMOJI = {
-  '🐸': '🟩',
-  '🐱': '🟨',
-  '🐭': '⬜',
-  '🦄': '🟪',
-  '🪼': '🟦',
-};
-
-function drawPlayer(x,y,color,name,isMe=false,role='dasher',animal='🐭'){
-  const S=CELL-4;
-  const px=x-S/2, py=y-S/2;
-
-  if(role==='wall'){
-    // Wall player: the colored square emoji — full cell size, NO extra wrapper
-    const wallEmoji = WALL_EMOJI[animal] || '⬜';
-
-    // Subtle glow behind the square for "my" wall player
-    if(isMe){
-      const wallCol=ANIMAL_WALL_FLAT[animal]||'#444466';
-      const rgb=hexToRgb(wallCol);
-      ctx.globalAlpha=0.18;
-      ctx.fillStyle=`rgb(${rgb.r},${rgb.g},${rgb.b})`;
-      ctx.fillRect(px-3,py-3,S+6,S+6);
-      ctx.globalAlpha=1;
-    }
-
-    // Draw the square emoji — centered, no circles, no rectangles, just the emoji
-    ctx.font=`${Math.round(S*1.05)}px serif`;
-    ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(wallEmoji,x,y+1);
-
-  } else {
-    // Runner: just the animal emoji — no boxes, no circles, just the emoji
-    // Subtle glow ring for local player only (not visible shape, just ambiance)
-    if(isMe){
-      const rgb=hexToRgb(color);
-      ctx.globalAlpha=0.12;
-      ctx.fillStyle=`rgb(${rgb.r},${rgb.g},${rgb.b})`;
-      ctx.fillRect(px,py,S,S);
-      ctx.globalAlpha=1;
-    }
-    ctx.font=`${Math.round(S*0.9)}px serif`;
-    ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(animal,x,y+1);
-  }
-
-  // Name tag above
-  ctx.font='bold 8px Space Mono,monospace';
-  ctx.textAlign='center';ctx.textBaseline='bottom';
-  ctx.fillStyle=isMe?'#00ffa3':'rgba(100,100,130,0.8)';
-  ctx.fillText(name,x,py-2);
-}
-
-function hexToRgb(hex){
-  const n=parseInt((hex||'#888888').replace('#',''),16);
-  return {r:(n>>16)&255,g:(n>>8)&255,b:n&255};
-}
-
-function hexMix(hex1, hex2, t){
-  // Mix hex1 into hex2 with factor t (0=hex2, 1=hex1)
-  const parse=h=>{
-    const n=parseInt((h||'#808080').replace('#',''),16);
-    return [(n>>16)&255,(n>>8)&255,n&255];
-  };
-  const [r1,g1,b1]=parse(hex1);
-  const [r2,g2,b2]=parse(hex2);
-  const r=Math.round(r2+(r1-r2)*t);
-  const g=Math.round(g2+(g1-g2)*t);
-  const b=Math.round(b2+(b1-b2)*t);
-  return `rgb(${r},${g},${b})`;
-}
-
-function lightenColor(hex,amt){
-  const n=parseInt(hex.slice(1),16);
-  const r=Math.min(255,((n>>16)&0xff)+amt);
-  const g=Math.min(255,((n>>8)&0xff)+amt);
-  const b=Math.min(255,(n&0xff)+amt);
-  return `rgb(${r},${g},${b})`;
-}
-
-function roundRect(ctx,x,y,w,h,r){
+// Function to draw rounded rectangles for walls (if needed for other elements)
+function roundRect(ctx, x, y, width, height, radius) {
   ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
-  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
-  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
-  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
   ctx.closePath();
 }
 
-function drawMinimap(offX,offY){
-  const mm=document.getElementById('minimap');
-  const mc=mm.getContext('2d');
-  const mw=80,mh=80;
-  const cw=mw/COLS, ch=mh/ROWS;
-  mc.clearRect(0,0,mw,mh);
+function generateMaze() {
+  maze = Array(MAZE_HEIGHT).fill(0).map(() => Array(MAZE_WIDTH).fill(1)); // 1 for wall
 
-  // Background
-  mc.fillStyle='rgba(4,4,13,0.95)'; mc.fillRect(0,0,mw,mh);
-
-  // Walls
-  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
-    if(maze[r][c]===1){
-      mc.fillStyle='#1a1a38';
-      mc.fillRect(c*cw,r*ch,cw,ch);
+  function carvePath(cx, cy) {
+    const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]].sort(() => Math.random() - 0.5);
+    for (const [dx, dy] of directions) {
+      const nx = cx + dx * 2;
+      const ny = cy + dy * 2;
+      if (nx >= 0 && nx < MAZE_WIDTH && ny >= 0 && ny < MAZE_HEIGHT && maze[ny][nx] === 1) {
+        maze[cy + dy][cx + dx] = 0; // Carve path
+        maze[ny][nx] = 0; // Move to next cell
+        carvePath(nx, ny);
+      }
     }
   }
 
-  // Treasures as colored dots
-  treasures.forEach(t=>{
-    if(t.got) return;
-    mc.fillStyle=t.glow;
-    mc.globalAlpha=0.7;
-    mc.fillRect(t.c*cw+cw*.25,t.r*ch+ch*.25,cw*.5,ch*.5);
-    mc.globalAlpha=1;
-  });
+  // Start carving from a random point
+  const startX = Math.floor(Math.random() * (MAZE_WIDTH / 2)) * 2 + 1;
+  const startY = Math.floor(Math.random() * (MAZE_HEIGHT / 2)) * 2 + 1;
+  maze[startY][startX] = 0;
+  carvePath(startX, startY);
 
-  // Players as dots
-  Object.entries(players).forEach(([id,p])=>{
-    const isMe=id===myId;
-    mc.fillStyle=isMe?'#00ffa3':(p.color||'#5599ff');
-    mc.globalAlpha=isMe?1:0.8;
-    const dotR=Math.max(cw,ch)*1.1;
-    mc.beginPath();
-    mc.arc(p.col*cw+cw/2,p.row*ch+ch/2,dotR,0,Math.PI*2);
-    mc.fill();
-    mc.globalAlpha=1;
-  });
-
-  // Viewport rect indicator
-  mc.strokeStyle='rgba(0,255,163,0.3)';
-  mc.lineWidth=0.7;
-  mc.strokeRect(offX/MW*mw,offY/MH*mh,(VW/MW)*mw,(VH/MH)*mh);
-}
-
-function updateScoreboard(){
-  const sb=document.getElementById('scoreboard');
-  if(roomConfig.gameMode==='coop'){
-    // Group by team
-    const teams={};
-    Object.entries(players).forEach(([id,p])=>{
-      if(!teams[p.teamId]) teams[p.teamId]={members:[],score:0};
-      teams[p.teamId].members.push({id,p});
-      teams[p.teamId].score+=p.score;
-    });
-    const sorted=Object.entries(teams).sort(([,a],[,b])=>b.score-a.score);
-    sb.innerHTML=sorted.map(([tid,t],i)=>{
-      const isMyTeam=t.members.some(({id})=>id===myId);
-      const names=t.members.map(({id,p})=>`${p.animal||'🐭'}${p.name}`).join(' & ');
-      return `<div class="sb-row">
-        <span class="sb-name ${isMyTeam?'sb-me':''}">${isMyTeam?'▶ ':''}${names}</span>
-        <span class="sb-pts">${t.score}</span>
-      </div>`;
-    }).join('');
-  } else {
-    const sorted=Object.entries(players).sort(([,a],[,b])=>b.score-a.score);
-    sb.innerHTML=sorted.map(([id,p])=>`
-      <div class="sb-row">
-        <span class="sb-name ${id===myId?'sb-me':''}">${id===myId?'▶ ':''} ${p.name}</span>
-        <span class="sb-pts">${p.score}</span>
-      </div>
-    `).join('');
+  // Ensure border walls
+  for(let i = 0; i < MAZE_WIDTH; i++) {
+    maze[0][i] = 1;
+    maze[MAZE_HEIGHT - 1][i] = 1;
+  }
+  for(let i = 0; i < MAZE_HEIGHT; i++) {
+    maze[i][0] = 1;
+    maze[i][MAZE_WIDTH - 1] = 1;
   }
 }
 
-function updateGameHUD(){
-  if(!myPlayer) return;
-
-  // In coop mode show team score
-  if(roomConfig.gameMode==='coop'){
-    const teamScore = Object.values(players)
-      .filter(p=>p.teamId===myPlayer.teamId)
-      .reduce((s,p)=>s+p.score,0);
-    document.getElementById('hudScore').textContent='فريق: '+teamScore;
-  } else {
-    document.getElementById('hudScore').textContent=myPlayer.score;
-  }
-
-  const got=treasures.filter(t=>t.got).length;
-  document.getElementById('hudCollected').textContent=got+'/'+totalTreasures;
-
-  // Role indicator
-  const roleEl=document.getElementById('hudRole');
-  if(roomConfig.gameMode==='coop'){
-    roleEl.style.display='flex';
-    const myAnimal = myPlayer.animal||'🐭';
-    const wallSq = WALL_EMOJI[myAnimal]||'⬜';
-    if(myPlayer.role==='wall'){
-      roleEl.innerHTML=`<span class="hi-val" style="color:#ffaa44">${wallSq} حيطة</span>`;
-      document.getElementById('hudBreak').parentElement.style.display='none';
-    } else {
-      roleEl.innerHTML=`<span class="hi-val" style="color:var(--neon)">${myAnimal} رانر</span>`;
-      document.getElementById('hudBreak').parentElement.style.display='flex';
+function drawMaze() {
+  for (let y = 0; y < MAZE_HEIGHT; y++) {
+    for (let x = 0; x < MAZE_WIDTH; x++) {
+      if (maze[y][x] === 1) {
+        ctx.fillStyle = WALL_COLOR;
+        roundRect(ctx, x * CELL, y * CELL, CELL, CELL, 5); // Walls with slight rounding
+        ctx.fill();
+        // Add some texture to the walls
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x * CELL, y * CELL, CELL, CELL);
+      } else {
+        ctx.fillStyle = PATH_COLOR;
+        ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+      }
     }
-  } else {
-    roleEl.style.display='none';
+  }
+}
+
+function drawTreasure(x, y) {
+  const cx = x * CELL + CELL / 2;
+  const cy = y * CELL + CELL / 2;
+  const R = CELL * 0.3;
+
+  // Gold glow effect
+  const glowGrd = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 2);
+  glowGrd.addColorStop(0, TREASURE_COLOR + '88');
+  glowGrd.addColorStop(1, 'transparent');
+  ctx.fillStyle = glowGrd;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R * 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Treasure chest shape (simplified)
+  ctx.fillStyle = TREASURE_COLOR;
+  ctx.beginPath();
+  ctx.moveTo(cx - R, cy);
+  ctx.lineTo(cx, cy - R);
+  ctx.lineTo(cx + R, cy);
+  ctx.lineTo(cx, cy + R);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = lightenColor(TREASURE_COLOR, -50);
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Sparkle effect
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+  for (let i = 0; i < 4; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.random() * R * 0.8;
+    const sx = cx + Math.cos(angle) * dist;
+    const sy = cy + Math.sin(angle) * dist;
+    ctx.beginPath();
+    ctx.arc(sx, sy, Math.random() * 2 + 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawPlayer(x,y,color,name,isMe=false,role='dasher',teamId=null,teamColor=null, emoji = null){
+  const R=CELL*.38;
+
+  // Team ring (coop mode) - orbit ring around player
+  if(roomConfig.gameMode==='coop' && teamColor){
+    ctx.save();
+    ctx.strokeStyle=teamColor;
+    ctx.lineWidth=2.5;
+    ctx.globalAlpha=0.6;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.arc(x,y,R+5,0,Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha=1;
+    ctx.restore();
   }
 
-  const brkEl=document.getElementById('hudBreak');
-  const brkInd=document.getElementById('brkInd');
-  if(myPlayer.role!=='wall'){
-    if(myPlayer.breakCD<=0){
-      brkEl.textContent='جاهز'; brkEl.className='hi-val ready';
-      brkInd.textContent='💥 جاهز!'; brkInd.style.color='#ff7744';
-    } else {
-      const secs=Math.ceil(myPlayer.breakCD/60);
-      brkEl.textContent=secs+'s'; brkEl.className='hi-val cd';
-      brkInd.textContent=`⏳ ${secs}s`; brkInd.style.color='var(--muted)';
+  // Outer glow
+  const grd=ctx.createRadialGradient(x,y,0,x,y,R*3);
+  grd.addColorStop(0,color+'33'); grd.addColorStop(1,'transparent');
+  ctx.fillStyle=grd;
+  ctx.beginPath(); ctx.arc(x,y,R*3,0,Math.PI*2); ctx.fill();
+
+  // Draw emoji directly based on role and assigned emoji
+  const playerEmoji = players[myId].emoji; // Assuming myPlayer is accessible here
+  if(emoji === null){
+      // This path should ideally not be taken if emojis are properly assigned
+      // Fallback or debug, if needed
+      emoji = role === 'wall' ? '🧱' : '❓'; // Default fallback
+  }
+
+
+  ctx.save();
+  ctx.font=`${Math.round(CELL*.6)}px Arial`; // Use a standard emoji-friendly font
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(0,0,0,0.5)'; // Subtle shadow for pop
+  ctx.shadowBlur=4;
+  ctx.fillText(emoji, x, y);
+  ctx.restore();
+
+  // Name tag with backdrop
+  const nm = (isMe?'▸ ':'')+name;
+  ctx.font=`${isMe?'bold ':''} 9px sans-serif`;
+  const tw=ctx.measureText(nm).width;
+  ctx.fillStyle='#0b061488';
+  ctx.fillRect(x-tw/2-3, y-R-15, tw+6, 13);
+  ctx.fillStyle=isMe?'#fff':'#ccc';
+  ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.fillText(nm,x,y-R-3);
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawMaze();
+  treasures.forEach(t => drawTreasure(t.x, t.y));
+
+  for (const id in players) {
+    const p = players[id];
+    if (id !== myId) {
+      drawPlayer(p.px,p.py,p.color,p.name,false,p.role||'dasher',p.teamId,teamColors[p.teamId]||null, p.emoji);
     }
-  } else {
-    brkInd.style.display='none';
   }
+  if(myPlayer) drawPlayer(myPlayer.px,myPlayer.py,myPlayer.color||'#5599ff',myPlayer.name,true,myPlayer.role||'dasher',myPlayer.teamId,teamColors[myPlayer.teamId]||null, myPlayer.emoji);
+
+  requestAnimationFrame(drawGame);
 }
 
-// ══════════════════════════════════════════════════
-//  SOUND EFFECTS (Web Audio API)
-// ══════════════════════════════════════════════════
-let audioCtx=null;
-function getAudio(){
-  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==='suspended') audioCtx.resume();
-  return audioCtx;
-}
+function onGameStart(config) {
+  roomConfig = config;
+  generateMaze();
+  treasures = TREASURE_DEF.map(t => ({...t, collected: false}));
 
-function playTone(freq,type,dur,vol=0.18,decay=true){
-  try{
-    const ac=getAudio();
-    const osc=ac.createOscillator();
-    const gain=ac.createGain();
-    osc.connect(gain); gain.connect(ac.destination);
-    osc.type=type; osc.frequency.setValueAtTime(freq,ac.currentTime);
-    gain.gain.setValueAtTime(vol,ac.currentTime);
-    if(decay) gain.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+dur);
-    osc.start(ac.currentTime); osc.stop(ac.currentTime+dur);
-  }catch(e){}
-}
+  // Dummy player initialization for demonstration
+  // In a real game, this would come from a server
+  players = {};
+  myId = 'player1';
+  players[myId] = {
+    id: myId,
+    name: 'Player 1',
+    px: CELL + CELL/2,
+    py: CELL + CELL/2,
+    color: '#5599ff',
+    score:0, dash:null, trail:[], emoji: roomConfig.gameMode==='coop' ? (0 % 2===0 ? RUNNER_EMOJIS[Math.floor(0/2) % RUNNER_EMOJIS.length] : WALL_EMOJIS_BY_RUNNER_INDEX[Math.floor(0/2) % WALL_EMOJIS_BY_RUNNER_INDEX.length]) : RUNNER_EMOJIS[0 % RUNNER_EMOJIS.length]
+  };
+  myPlayer = players[myId];
 
-function sfxCollect(val){
-  // Bright cheerful collect sound - pitch varies with value
-  const base=300+val*2;
-  playTone(base,'sine',0.08,0.15);
-  setTimeout(()=>playTone(base*1.5,'sine',0.12,0.12),60);
-  setTimeout(()=>playTone(base*2,'sine',0.10,0.10),130);
-}
-
-function sfxBreakWall(){
-  // Thud / crumble
-  try{
-    const ac=getAudio();
-    const buf=ac.createBuffer(1,ac.sampleRate*.15,ac.sampleRate);
-    const d=buf.getChannelData(0);
-    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
-    const src=ac.createBufferSource();
-    const gain=ac.createGain();
-    src.buffer=buf; src.connect(gain); gain.connect(ac.destination);
-    gain.gain.setValueAtTime(0.3,ac.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+.15);
-    src.start();
-  }catch(e){}
-}
-
-function sfxDash(){
-  // Quick whoosh
-  try{
-    const ac=getAudio();
-    const osc=ac.createOscillator();
-    const gain=ac.createGain();
-    osc.connect(gain); gain.connect(ac.destination);
-    osc.type='sawtooth';
-    osc.frequency.setValueAtTime(400,ac.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(150,ac.currentTime+0.12);
-    gain.gain.setValueAtTime(0.08,ac.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.12);
-    osc.start(ac.currentTime); osc.stop(ac.currentTime+0.12);
-  }catch(e){}
-}
-
-function sfxCountdown(n){
-  if(n>0) playTone(n===1?880:440,'sine',0.2,0.25);
-  else { playTone(660,'sine',0.15,0.3); setTimeout(()=>playTone(880,'sine',0.2,0.3),150); }
-}
-
-function sfxWin(){
-  const notes=[523,659,784,1047];
-  notes.forEach((f,i)=>setTimeout(()=>playTone(f,'sine',0.35,0.2),i*120));
-}
-
-function spawnBurst(x,y,col,n){
-  for(let i=0;i<n;i++){
-    const a=Math.random()*Math.PI*2, s=1.5+Math.random()*3;
-    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1.5,
-      life:1,decay:0.035+Math.random()*.03,size:2+Math.random()*3,col});
-  }
-}
-
-// ══════════════════════════════════════════════════
-//  GAME END
-// ══════════════════════════════════════════════════
-function onGameEnd(d){
-  gameRunning=false;
-  clearInterval(timerInterval);
-  cancelAnimationFrame(raf);
-  sfxWin();
-  showScreen('end');
-
-  const scores=d.scores||getScores();
-  const medals=['🥇','🥈','🥉'];
-  document.getElementById('endTitle').textContent =
-    d.reason==='score' ? '🏆 وصل أحد اللاعبين للهدف!' : '⏰ انتهى الوقت!';
-
-  document.getElementById('endPodium').innerHTML=scores.slice(0,6).map((p,i)=>`
-    <div class="podium-row ${i===0?'first':''}">
-      <span class="rank">${medals[i]||'  '}</span>
-      <span class="pname" style="color:${p.color||'#fff'}">${p.name}</span>
-      <span class="ppts">${p.score} نقطة</span>
-    </div>
-  `).join('');
-
-  document.getElementById('btnPlayAgain').style.display=isHost?'block':'none';
-}
-
-function onPlayAgain(d){
-  if(isHost) return; // host already handles
-  // Re-init with same room, host will send new game-start
-  showScreen('lobby');
-  refreshLobby();
-}
-
-// ══════════════════════════════════════════════════
-//  TOUCH SWIPE
-// ══════════════════════════════════════════════════
-const wrap2 = document.getElementById('wrap');
-wrap2.addEventListener('touchstart',e=>{
-  touchStartX=e.touches[0].clientX;
-  touchStartY=e.touches[0].clientY;
-},{passive:true});
-wrap2.addEventListener('touchend',e=>{
-  const dx=e.changedTouches[0].clientX-touchStartX;
-  const dy=e.changedTouches[0].clientY-touchStartY;
-  const minSwipe=30;
-  if(Math.abs(dx)<minSwipe&&Math.abs(dy)<minSwipe) return;
-  if(Math.abs(dx)>Math.abs(dy)) tryInput(dx>0?[1,0]:[-1,0]);
-  else tryInput(dy>0?[0,1]:[0,-1]);
-},{passive:true});
-
-// D-Pad with hold-to-repeat
-const dirMap={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]};
-const dpadHold={};
-const HOLD_INITIAL_MS = 200; // delay before repeat starts
-const HOLD_REPEAT_MS  = 100; // repeat interval
-
-['u','d','l','r'].forEach(k=>{
-  const b=document.getElementById('db-'+k);
-  const startHold=()=>{
-    if(dpadHold[k]) return;
-    b.classList.add('on');
-    tryInput(dirMap[k]); // immediate first press
-    dpadHold[k]={
-      timer: setTimeout(function repeat(){
-        tryInput(dirMap[k]);
-        dpadHold[k].timer=setTimeout(repeat, HOLD_REPEAT_MS);
-      }, HOLD_INITIAL_MS)
+  // Add a second player for coop mode demonstration
+  if (roomConfig.gameMode === 'coop') {
+    const otherPlayerId = 'player2';
+    players[otherPlayerId] = {
+      id: otherPlayerId,
+      name: 'Player 2',
+      px: MAZE_WIDTH * CELL - CELL - CELL/2,
+      py: MAZE_HEIGHT * CELL - CELL - CELL/2,
+      color: '#ff55aa',
+      role: 'wall',
+      teamId: 0, // Same team as player 1
+      score:0, dash:null, trail:[], emoji: roomConfig.gameMode==='coop' ? (1 % 2===0 ? RUNNER_EMOJIS[Math.floor(1/2) % RUNNER_EMOJIS.length] : WALL_EMOJIS_BY_RUNNER_INDEX[Math.floor(1/2) % WALL_EMOJIS_BY_RUNNER_INDEX.length]) : RUNNER_EMOJIS[1 % RUNNER_EMOJIS.length]
     };
-  };
-  const stopHold=()=>{
-    b.classList.remove('on');
-    if(dpadHold[k]){ clearTimeout(dpadHold[k].timer); dpadHold[k]=null; }
-  };
-  b.addEventListener('touchstart',e=>{ e.preventDefault(); startHold(); },{passive:false});
-  b.addEventListener('touchend', stopHold,{passive:true});
-  b.addEventListener('touchcancel',stopHold,{passive:true});
-  // Mouse support for desktop testing
-  b.addEventListener('mousedown',e=>{ e.preventDefault(); startHold(); });
-  b.addEventListener('mouseup',  stopHold);
-  b.addEventListener('mouseleave',stopHold);
-});
+  }
 
-// ══════════════════════════════════════════════════
-//  SOLO MODE
-// ══════════════════════════════════════════════════
-function startSolo(){
-  const [cols,rows]=SIZE_MAP['lg'];
-  const mazeData=genMaze(cols,rows);
-  const trs=placeTreasures(mazeData,cols,rows);
-  maze=mazeData; COLS=cols; ROWS=rows;
-  MW=COLS*CELL; MH=ROWS*CELL;
-  treasures=trs; totalTreasures=trs.length;
-  BREAK_COOLDOWN_FRAMES=180; winScore=0;
-  roomConfig={gameSecs:0,breakSecs:3};
-
-  players={};
-  players[myId]={name:myName||'أنت',color:'#5588ff',
-    animal:'🐭',
-    col:1,row:1,px:CELL+CELL/2,py:CELL+CELL/2,
-    score:0,dash:null,trail:[],breakCD:0};
-  myPlayer=players[myId];
-
-  setupCanvas();
-  particles=[]; floats=[]; pendingDash=null; localDash=null;
-  cachedWallTints=null;
-  gameRunning=true;
-
-  // Hide online elements
-  document.getElementById('scoreboard').style.display='none';
-  document.getElementById('brkInd').style.display='block';
-  showScreen('game');
-  updateTimerUI();
-  cancelAnimationFrame(raf);
-  raf=requestAnimationFrame(gameLoop);
+  gameStarted = true;
+  document.getElementById('game-overlay').style.display = 'none';
+  drawGame();
 }
 
-// ══════════════════════════════════════════════════
-//  BUTTON LISTENERS
-// ══════════════════════════════════════════════════
-document.getElementById('btnCreate').addEventListener('click',()=>{
-  myName=document.getElementById('nameInput').value.trim()||'لاعب';
-  showScreen('create');
-});
+function startGame() {
+  onGameStart({ gameMode: 'coop' }); // Start in coop mode as per request
+}
 
-document.getElementById('cfgGameMode').addEventListener('change',function(){
-  document.getElementById('coopHint').style.display = this.value==='coop' ? 'block' : 'none';
-});
+// Basic movement (for demonstration)
+document.addEventListener('keydown', (e) => {
+  if (!gameStarted || !myPlayer) return;
 
-document.getElementById('btnBackCreate').addEventListener('click',()=>showScreen('menu'));
+  let targetX = myPlayer.px;
+  let targetY = myPlayer.py;
+  const step = CELL; // Move by one cell
 
-document.getElementById('btnConfirmCreate').addEventListener('click',async()=>{
-  myName=document.getElementById('nameInput').value.trim()||'لاعب';
-  roomConfig={
-    size:     document.getElementById('cfgSize').value,
-    maxPlayers:+document.getElementById('cfgMaxPlayers').value,
-    gameSecs:  +document.getElementById('cfgTime').value,
-    winScore:  +document.getElementById('cfgWinScore').value,
-    breakSecs: +document.getElementById('cfgBreak').value,
-    countdown: +document.getElementById('cfgCountdown').value,
-    gameMode:  document.getElementById('cfgGameMode').value,
-  };
-  roomCode=genCode();
-  isHost=true;
-
-  toast('جاري الاتصال...');
-  await connectAbly();
-  joinChannel(roomCode);
-
-  document.getElementById('roomCodeDisplay').textContent=roomCode;
-  document.getElementById('lobbySettings').innerHTML=
-    `متاهة: ${document.getElementById('cfgSize').options[document.getElementById('cfgSize').selectedIndex].text} | ` +
-    `وقت: ${roomConfig.gameSecs||'∞'}s | سكور الفوز: ${roomConfig.winScore||'∞'} | اختراق: ${roomConfig.breakSecs||0}s`;
-
-  showScreen('lobby');
-  refreshLobby();
-});
-
-document.getElementById('btnJoin').addEventListener('click',async()=>{
-  myName=document.getElementById('nameInput').value.trim()||'لاعب';
-  const code=document.getElementById('joinCode').value.trim().toUpperCase();
-  if(code.length<4){ toast('أدخل كود الغرفة'); return; }
-  isHost=false;
-  roomCode=code;
-  toast('جاري الاتصال...');
-  await connectAbly();
-  joinChannel(code);
-  document.getElementById('roomCodeDisplay').textContent=code;
-  showScreen('lobby');
-  refreshLobby();
-  toast('انضممت للغرفة!');
-});
-
-document.getElementById('btnStartGame').addEventListener('click',async()=>{
-  if(!isHost) return;
-  const members=await channel.presence.get();
-  if(members.length<1){ toast('لازم يكون فيه لاعبين!'); return; }
-  if(members.length>roomConfig.maxPlayers){
-    toast('العدد أكبر من المسموح!'); return;
+  switch (e.key) {
+    case 'ArrowUp':
+      targetY -= step;
+      break;
+    case 'ArrowDown':
+      targetY += step;
+      break;
+    case 'ArrowLeft':
+      targetX -= step;
+      break;
+    case 'ArrowRight':
+      targetX += step;
+      break;
   }
-  hostStartGame();
+
+  const gridX = Math.floor(targetX / CELL);
+  const gridY = Math.floor(targetY / CELL);
+
+  if (gridX >= 0 && gridX < MAZE_WIDTH && gridY >= 0 && gridY < MAZE_HEIGHT && maze[gridY][gridX] === 0) {
+    myPlayer.px = targetX;
+    myPlayer.py = targetY;
+
+    // Check for treasure collection
+    treasures.forEach(t => {
+      if (!t.collected && gridX === t.x && gridY === t.y) {
+        t.collected = true;
+        myPlayer.score++;
+        document.getElementById('score').innerText = myPlayer.score;
+        showMessage('Treasure Collected!');
+      }
+    });
+  }
 });
 
-document.getElementById('btnLeaveLobby').addEventListener('click',()=>{
-  if(channel){ channel.presence.leave(); channel.detach(); channel=null; }
-  isHost=false;
-  showScreen('menu');
-});
+function showMessage(msg) {
+  const msgDisplay = document.getElementById('message-display');
+  msgDisplay.innerText = msg;
+  msgDisplay.style.opacity = 1;
+  setTimeout(() => {
+    msgDisplay.style.opacity = 0;
+  }, 2000);
+}
 
-document.getElementById('btnSolo').addEventListener('click',()=>{
-  myName=document.getElementById('nameInput').value.trim()||'لاعب';
-  startSolo();
-});
-
-document.getElementById('btnPlayAgain').addEventListener('click',()=>{
-  if(!isHost) return;
-  pub('play-again',{});
-  showScreen('lobby');
-  refreshLobby();
-});
-
-document.getElementById('btnBackMenu').addEventListener('click',()=>{
-  gameRunning=false;
-  clearInterval(timerInterval);
-  cancelAnimationFrame(raf);
-  showScreen('menu');
-});
 </script>
 </body>
 </html>
