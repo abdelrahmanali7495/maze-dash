@@ -238,6 +238,19 @@ select option { background:#1a0a2e; }
         </select>
       </label>
     </div>
+    <label>🎮 نوع اللعبة
+      <select id="cfgGameMode">
+        <option value="ffa">فردي – كل واحد لنفسه</option>
+        <option value="coop">🤝 تعاوني – فرق من اتنين (داشر + حيطة)</option>
+      </select>
+    </label>
+    <div id="coopHint" style="display:none;background:#5599ff15;border:1px solid #5599ff33;border-radius:6px;padding:10px;font-size:11px;color:#88aaff;line-height:1.7;">
+      <b>مود تعاوني:</b> كل أتنين يكوّنوا فريق<br>
+      🏃 <b>الداشر</b> (الأول في الفريق): يتحرك بالداش، يجمع الكنوز<br>
+      🧱 <b>الحيطة</b> (التاني في الفريق): يمشي ببطء، مش بيجمع كنوز<br>
+      الحيطة تعوق صاحبها في الفريق بس مش الفرق التانية 😄<br>
+      النقاط بتحسب للفريق كله
+    </div>
     <div class="row">
       <label>وقت المباراة (ثانية)
         <select id="cfgTime">
@@ -307,6 +320,7 @@ select option { background:#1a0a2e; }
     <div class="hitem">💎 <span id="hudCollected">0/0</span></div>
     <div class="hitem">🏆 <span id="hudScore">0</span></div>
     <div class="hitem">💥 <span id="hudBreak" style="color:#ff8844">جاهز</span></div>
+    <div class="hitem" id="hudRole" style="display:none"></div>
   </div>
   <div id="timerBar"><div id="timerFill"></div></div>
   <div id="wrap">
@@ -591,7 +605,9 @@ async function hostStartGame() {
     config: roomConfig,
     spawns: playerSpawns,
     playerList: members.map((m,i)=>({
-      id:m.clientId, name:m.data?.name||m.clientId, color:PLAYER_COLORS[i%PLAYER_COLORS.length]
+      id:m.clientId, name:m.data?.name||m.clientId, color:PLAYER_COLORS[i%PLAYER_COLORS.length],
+      teamId: roomConfig.gameMode==='coop' ? Math.floor(i/2) : i,
+      role:   roomConfig.gameMode==='coop' ? (i%2===0?'dasher':'wall') : 'dasher'
     }))
   });
 }
@@ -650,7 +666,9 @@ function onGameStart(d) {
       col:spawn.c, row:spawn.r,
       px:spawn.c*CELL+CELL/2, py:spawn.r*CELL+CELL/2,
       score:0, dash:null, trail:[],
-      breakCD:0
+      breakCD:0,
+      teamId: p.teamId ?? p.id,
+      role: p.role || 'dasher'
     };
   });
   myPlayer = players[myId];
@@ -743,10 +761,22 @@ function gameLoop() {
 function updateLocal() {
   if(!myPlayer) return;
 
-  // Break cooldown
-  if(myPlayer.breakCD>0) myPlayer.breakCD--;
+  // Break cooldown (only for dasher)
+  if(myPlayer.role!=='wall' && myPlayer.breakCD>0) myPlayer.breakCD--;
 
-  // Local dash animation
+  // Wall player uses dash slot for smooth step animation
+  if(myPlayer.role==='wall' && myPlayer.dash){
+    myPlayer.dash.t++;
+    const pp=Math.min(myPlayer.dash.t/myPlayer.dash.dur,1);
+    const e=1-Math.pow(1-pp,3);
+    myPlayer.px=myPlayer.dash.fromPx+(myPlayer.dash.toPx-myPlayer.dash.fromPx)*e;
+    myPlayer.py=myPlayer.dash.fromPy+(myPlayer.dash.toPy-myPlayer.dash.fromPy)*e;
+    if(myPlayer.dash.t>=myPlayer.dash.dur){
+      myPlayer.px=myPlayer.dash.toPx; myPlayer.py=myPlayer.dash.toPy; myPlayer.dash=null;
+    }
+  }
+
+  // Local dash animation (dasher)
   if(localDash){
     localDash.t++;
     const p=Math.min(localDash.t/localDash.dur,1);
@@ -794,13 +824,16 @@ function updateLocal() {
 
 function pubMove() {
   if(!myPlayer) return;
-  pub('player-move',{ col:myPlayer.col, row:myPlayer.row, px:myPlayer.px, py:myPlayer.py });
+  pub('player-move',{ col:myPlayer.col, row:myPlayer.row, px:myPlayer.px, py:myPlayer.py, role:myPlayer.role, teamId:myPlayer.teamId });
 }
 
 function onPlayerMove(d) {
   if(d.from===myId) return;
   if(!players[d.from]) return;
   const p=players[d.from];
+  // Update role/teamId if included
+  if(d.role) p.role=d.role;
+  if(d.teamId!==undefined) p.teamId=d.teamId;
   // Animate other player smoothly
   const fromPx=p.px, fromPy=p.py;
   const toPx=d.col*CELL+CELL/2, toPy=d.row*CELL+CELL/2;
@@ -839,8 +872,33 @@ function keyToDir(k){
 
 function tryInput(dir){
   if(!gameRunning||!myPlayer) return;
+  // Wall role: move step by step, no dash, no collect
+  if(myPlayer.role==='wall'){
+    doWallMove(dir);
+    return;
+  }
   if(localDash){ pendingDash=dir; return; }
   doLocalDash(dir);
+}
+
+function doWallMove(dir){
+  const[dc,dr]=dir;
+  const nc=myPlayer.col+dc, nr=myPlayer.row+dr;
+  if(nc<0||nc>=COLS||nr<0||nr>=ROWS) return;
+  if(maze[nr][nc]===1) return; // wall players can't break walls
+
+  // Check collision with own team dasher (block if same team)
+  // Other teams pass through wall player
+  const blockedByTeammate = Object.values(players).some(p=>
+    p!==myPlayer && p.teamId===myPlayer.teamId && p.col===nc && p.row===nr
+  );
+  if(blockedByTeammate){ spawnBurst(nc*CELL+CELL/2,nr*CELL+CELL/2,'#ff8844',4); return; }
+
+  myPlayer.col=nc; myPlayer.row=nr;
+  // Smooth pixel movement
+  const toPx=nc*CELL+CELL/2, toPy=nr*CELL+CELL/2;
+  myPlayer.dash={ fromPx:myPlayer.px, fromPy:myPlayer.py, toPx, toPy, t:0, dur:10 };
+  pubMove();
 }
 
 function doLocalDash(dir){
@@ -867,10 +925,15 @@ function doLocalDash(dir){
     }
   }
 
-  // Slide to wall
+  // Slide to wall - stop also if hitting own team wall player
   while(true){
     const nc=c+dc, nr=r+dr;
     if(nc<0||nc>=COLS||nr<0||nr>=ROWS||maze[nr][nc]===1) break;
+    // Check if own team wall player is standing on next cell
+    const wallBlocker = Object.values(players).find(p=>
+      p.role==='wall' && p.teamId===myPlayer.teamId && p.col===nc && p.row===nr
+    );
+    if(wallBlocker) break; // treat wall player like a wall for their own dasher
     c=nc; r=nr;
   }
   if(c===myPlayer.col&&r===myPlayer.row){ pendingDash=null; return; }
@@ -910,6 +973,21 @@ function tryCollect(c,r){
 }
 
 function getScores(){
+  if(roomConfig.gameMode==='coop'){
+    // Aggregate by team
+    const teams={};
+    Object.entries(players).forEach(([id,p])=>{
+      if(!teams[p.teamId]) teams[p.teamId]={score:0,members:[],color:p.color};
+      teams[p.teamId].score+=p.score;
+      teams[p.teamId].members.push(p);
+    });
+    return Object.values(teams)
+      .sort((a,b)=>b.score-a.score)
+      .map(t=>({
+        name: t.members.map(p=>`${p.role==='wall'?'🧱':'🏃'}${p.name}`).join(' & '),
+        score:t.score, color:t.color
+      }));
+  }
   return Object.entries(players).map(([id,p])=>({id,name:p.name,score:p.score,color:p.color}))
     .sort((a,b)=>b.score-a.score);
 }
@@ -1003,11 +1081,11 @@ function drawGame(){
   // Other players
   Object.entries(players).forEach(([id,p])=>{
     if(id===myId) return;
-    drawPlayer(p.px,p.py,p.color,p.name);
+    drawPlayer(p.px,p.py,p.color,p.name,false,p.role||'dasher');
   });
 
   // My player (drawn on top)
-  if(myPlayer) drawPlayer(myPlayer.px,myPlayer.py,myPlayer.color||'#5599ff',myPlayer.name,true);
+  if(myPlayer) drawPlayer(myPlayer.px,myPlayer.py,myPlayer.color||'#5599ff',myPlayer.name,true,myPlayer.role||'dasher');
 
   // Particles
   particles.forEach(p=>{
@@ -1036,18 +1114,36 @@ function drawGame(){
   updateScoreboard();
 }
 
-function drawPlayer(x,y,color,name,isMe=false){
+function drawPlayer(x,y,color,name,isMe=false,role='dasher'){
   const R=CELL*.4;
   // Glow
   const grd=ctx.createRadialGradient(x,y,0,x,y,R*2.5);
   grd.addColorStop(0,color+'44'); grd.addColorStop(1,'transparent');
   ctx.fillStyle=grd;
   ctx.beginPath(); ctx.arc(x,y,R*2.5,0,Math.PI*2); ctx.fill();
-  // Body
-  ctx.fillStyle=color;
-  ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
-  // Outline for my player
-  if(isMe){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); }
+
+  if(role==='wall'){
+    // Draw as a brick/wall square
+    ctx.fillStyle=color;
+    ctx.fillRect(x-R,y-R,R*2,R*2);
+    // Brick lines
+    ctx.strokeStyle='#00000055'; ctx.lineWidth=1;
+    ctx.strokeRect(x-R,y-R,R*2,R*2);
+    ctx.beginPath(); ctx.moveTo(x-R,y); ctx.lineTo(x+R,y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x,y-R); ctx.lineTo(x,y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x-R*.5,y); ctx.lineTo(x-R*.5,y+R); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+R*.5,y); ctx.lineTo(x+R*.5,y+R); ctx.stroke();
+    if(isMe){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.strokeRect(x-R,y-R,R*2,R*2); }
+    // 🧱 emoji
+    ctx.font=`${Math.round(R)}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('🧱',x,y);
+  } else {
+    // Body circle
+    ctx.fillStyle=color;
+    ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
+    if(isMe){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); }
+  }
   // Name tag
   ctx.fillStyle=isMe?'#fff':'#ccc';
   ctx.font=`${isMe?'bold ':''} 9px sans-serif`;
@@ -1081,29 +1177,78 @@ function drawMinimap(offX,offY){
 
 function updateScoreboard(){
   const sb=document.getElementById('scoreboard');
-  const sorted=Object.entries(players).sort(([,a],[,b])=>b.score-a.score);
-  sb.innerHTML=sorted.map(([id,p])=>`
-    <div class="sb-row">
-      <span class="sb-name ${id===myId?'sb-me':''}">${id===myId?'▶ ':''} ${p.name}</span>
-      <span class="sb-pts">${p.score}</span>
-    </div>
-  `).join('');
+  if(roomConfig.gameMode==='coop'){
+    // Group by team
+    const teams={};
+    Object.entries(players).forEach(([id,p])=>{
+      if(!teams[p.teamId]) teams[p.teamId]={members:[],score:0};
+      teams[p.teamId].members.push({id,p});
+      teams[p.teamId].score+=p.score;
+    });
+    const sorted=Object.entries(teams).sort(([,a],[,b])=>b.score-a.score);
+    sb.innerHTML=sorted.map(([tid,t],i)=>{
+      const isMyTeam=t.members.some(({id})=>id===myId);
+      const names=t.members.map(({id,p})=>`${p.role==='wall'?'🧱':'🏃'}${p.name}`).join(' & ');
+      return `<div class="sb-row">
+        <span class="sb-name ${isMyTeam?'sb-me':''}">${isMyTeam?'▶ ':''}${names}</span>
+        <span class="sb-pts">${t.score}</span>
+      </div>`;
+    }).join('');
+  } else {
+    const sorted=Object.entries(players).sort(([,a],[,b])=>b.score-a.score);
+    sb.innerHTML=sorted.map(([id,p])=>`
+      <div class="sb-row">
+        <span class="sb-name ${id===myId?'sb-me':''}">${id===myId?'▶ ':''} ${p.name}</span>
+        <span class="sb-pts">${p.score}</span>
+      </div>
+    `).join('');
+  }
 }
 
 function updateGameHUD(){
   if(!myPlayer) return;
-  document.getElementById('hudScore').textContent=myPlayer.score;
+
+  // In coop mode show team score
+  if(roomConfig.gameMode==='coop'){
+    const teamScore = Object.values(players)
+      .filter(p=>p.teamId===myPlayer.teamId)
+      .reduce((s,p)=>s+p.score,0);
+    document.getElementById('hudScore').textContent='فريق: '+teamScore;
+  } else {
+    document.getElementById('hudScore').textContent=myPlayer.score;
+  }
+
   const got=treasures.filter(t=>t.got).length;
   document.getElementById('hudCollected').textContent=got+'/'+totalTreasures;
+
+  // Role indicator
+  const roleEl=document.getElementById('hudRole');
+  if(roomConfig.gameMode==='coop'){
+    roleEl.style.display='flex';
+    if(myPlayer.role==='wall'){
+      roleEl.innerHTML='🧱 <span style="color:#ffaa44">أنت الحيطة</span>';
+      document.getElementById('hudBreak').parentElement.style.display='none';
+    } else {
+      roleEl.innerHTML='🏃 <span style="color:#55ff99">أنت الداشر</span>';
+      document.getElementById('hudBreak').parentElement.style.display='flex';
+    }
+  } else {
+    roleEl.style.display='none';
+  }
+
   const brkEl=document.getElementById('hudBreak');
   const brkInd=document.getElementById('brkInd');
-  if(myPlayer.breakCD<=0){
-    brkEl.textContent='جاهز'; brkEl.style.color='#ff8844';
-    brkInd.textContent='💥 اختراق جاهز!'; brkInd.style.color='#ff8844';
+  if(myPlayer.role!=='wall'){
+    if(myPlayer.breakCD<=0){
+      brkEl.textContent='جاهز'; brkEl.style.color='#ff8844';
+      brkInd.textContent='💥 اختراق جاهز!'; brkInd.style.color='#ff8844';
+    } else {
+      const secs=Math.ceil(myPlayer.breakCD/60);
+      brkEl.textContent=secs+'s'; brkEl.style.color='#666688';
+      brkInd.textContent=`⏳ ${secs}s`; brkInd.style.color='#666688';
+    }
   } else {
-    const secs=Math.ceil(myPlayer.breakCD/60);
-    brkEl.textContent=secs+'s'; brkEl.style.color='#666688';
-    brkInd.textContent=`⏳ ${secs}s`; brkInd.style.color='#666688';
+    brkInd.style.display='none';
   }
 }
 
@@ -1214,6 +1359,10 @@ document.getElementById('btnCreate').addEventListener('click',()=>{
   showScreen('create');
 });
 
+document.getElementById('cfgGameMode').addEventListener('change',function(){
+  document.getElementById('coopHint').style.display = this.value==='coop' ? 'block' : 'none';
+});
+
 document.getElementById('btnBackCreate').addEventListener('click',()=>showScreen('menu'));
 
 document.getElementById('btnConfirmCreate').addEventListener('click',async()=>{
@@ -1225,6 +1374,7 @@ document.getElementById('btnConfirmCreate').addEventListener('click',async()=>{
     winScore:  +document.getElementById('cfgWinScore').value,
     breakSecs: +document.getElementById('cfgBreak').value,
     countdown: +document.getElementById('cfgCountdown').value,
+    gameMode:  document.getElementById('cfgGameMode').value,
   };
   roomCode=genCode();
   isHost=true;
