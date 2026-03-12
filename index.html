@@ -6,376 +6,525 @@
 <title>متاهة الكنوز - أونلاين</title>
 <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Noto+Sans+Arabic:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
 
 :root {
-  --gold: #f0c060;
-  --dark: #080510;
-  --surface: #100c1e;
-  --surface2: #16112a;
-  --border: #2a2040;
-  --accent: #6677ff;
-  --text: #e8e0f8;
-  --muted: #7068a0;
+  --bg: #08080f;
+  --s1: #0f0f1a;
+  --s2: #161624;
+  --s3: #1e1e30;
+  --border: #ffffff0f;
+  --border2: #ffffff18;
+  --gold: #f5c842;
+  --gold2: #e8a020;
+  --text: #f0eeff;
+  --muted: #6b6890;
+  --green: #3dffa0;
+  --red: #ff4466;
+  --blue: #5588ff;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
 html, body {
   width:100%; height:100%;
-  background:var(--dark);
+  background:var(--bg);
   color:var(--text);
-  font-family:'Noto Sans Arabic',sans-serif;
+  font-family:'Noto Sans Arabic','Space Grotesk',sans-serif;
   overflow:hidden;
   touch-action:none;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-size:14px;
 }
 
-/* ── SCREENS ── */
-.screen { display:none; flex-direction:column; align-items:center; justify-content:center;
-  width:100%; height:100%; gap:12px; padding:16px; }
+/* ═══ SCREENS ═══ */
+.screen {
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+  width:100%; height:100%; gap:0; padding:0;
+}
 .screen.active { display:flex; }
 
-h1 { font-family:'Cinzel',serif; color:var(--gold);
-  font-size:clamp(18px,4.5vw,32px);
-  letter-spacing:2px; text-align:center;
-  text-shadow: 0 0 20px #f0c06055, 0 2px 4px #00000088;
-}
-h2 { font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(13px,3vw,20px); letter-spacing:1px; }
-
-.card {
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:12px; padding:18px 22px;
-  display:flex; flex-direction:column; gap:10px;
-  width:min(400px,94vw);
-  box-shadow: 0 8px 32px #00000066, inset 0 1px 0 #ffffff08;
+/* ═══ MENU SCREEN ═══ */
+#s-menu {
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, #1a0e3a44 0%, transparent 70%),
+    var(--bg);
 }
 
-label { font-size:11px; color:var(--muted); display:flex; flex-direction:column; gap:4px; letter-spacing:.5px; }
-input, select {
-  background:var(--surface2); border:1px solid var(--border);
-  color:var(--text); padding:9px 12px; border-radius:8px;
-  font-family:'Noto Sans Arabic',sans-serif; font-size:13px;
-  outline:none; width:100%; transition: border-color 0.15s;
+.menu-logo {
+  font-family:'Space Grotesk',sans-serif;
+  font-size: clamp(22px,6vw,38px);
+  font-weight:700;
+  color: var(--gold);
+  letter-spacing:-0.5px;
+  margin-bottom:4px;
+  text-align:center;
+  line-height:1.1;
 }
-input:focus, select:focus { border-color:var(--gold); background:#1c1535; }
-select option { background:#16112a; }
+.menu-logo span { color:var(--text); opacity:0.3; font-size:0.55em; display:block; letter-spacing:4px; text-transform:uppercase; font-weight:400; margin-top:4px; }
 
-.row { display:flex; gap:8px; }
-.row label { flex:1; }
+.menu-card {
+  width: min(340px, 92vw);
+  background: var(--s1);
+  border: 1px solid var(--border2);
+  border-radius:16px;
+  padding:20px 18px;
+  display:flex; flex-direction:column; gap:8px;
+  margin-top:16px;
+}
 
-.btn {
-  background:linear-gradient(135deg,#f0c060,#c8880a);
-  color:#0d0a18; border:none; padding:11px 20px;
-  font-family:'Cinzel',serif; font-size:12px; font-weight:900;
-  cursor:pointer; border-radius:8px; letter-spacing:.8px;
-  box-shadow:0 3px 16px #f0c06028; transition:all 0.13s;
+.input-field {
   width:100%;
+  background:var(--s2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:11px 14px;
+  color:var(--text);
+  font-family:'Noto Sans Arabic',sans-serif;
+  font-size:13px;
+  outline:none;
+  transition:border-color 0.15s, background 0.15s;
 }
-.btn:active { transform:scale(0.97); }
-.btn.secondary {
-  background:var(--surface2); color:var(--muted);
-  box-shadow:none; border:1px solid var(--border);
-  font-family:'Noto Sans Arabic',sans-serif; font-size:13px; font-weight:400; letter-spacing:0;
-}
-.btn.secondary:active { background:#1c1535; }
-.btn.danger { background:linear-gradient(135deg,#ff4455,#cc0022); color:#fff; }
+.input-field::placeholder { color:var(--muted); }
+.input-field:focus { border-color:var(--gold); background:var(--s3); }
 
-.divider { text-align:center; color:#3a3060; font-size:11px; position:relative; }
-.divider::before,.divider::after {
-  content:''; position:absolute; top:50%; width:40%; height:1px; background:#2a2040;
+.input-label {
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:.5px;
+  margin-bottom:4px;
+  display:block;
 }
-.divider::before { left:0; } .divider::after { right:0; }
 
-/* ── LOBBY ── */
+/* Primary CTA */
+.btn-primary {
+  width:100%; padding:13px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  border:none; border-radius:10px;
+  color:#09090f; font-family:'Noto Sans Arabic',sans-serif;
+  font-size:14px; font-weight:700;
+  cursor:pointer;
+  transition: opacity 0.12s, transform 0.1s;
+}
+.btn-primary:active { opacity:0.85; transform:scale(0.98); }
+
+/* Ghost button */
+.btn-ghost {
+  width:100%; padding:11px;
+  background:transparent;
+  border:1px solid var(--border2);
+  border-radius:10px;
+  color:var(--muted);
+  font-family:'Noto Sans Arabic',sans-serif;
+  font-size:13px;
+  cursor:pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+.btn-ghost:active { border-color:var(--border2); color:var(--text); background:var(--s2); }
+
+/* Join row */
+.join-row {
+  display:flex; gap:8px; align-items:flex-end;
+}
+.join-row .input-field { flex:1; letter-spacing:4px; text-align:center; font-size:15px; font-weight:700; }
+.join-row .btn-ghost { width:auto; padding:11px 14px; white-space:nowrap; flex-shrink:0; }
+
+.sep { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11px; }
+.sep::before,.sep::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ═══ CREATE SCREEN ═══ */
+#s-create { padding:14px; overflow-y:auto; }
+.create-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; width:min(380px,96vw); }
+.back-btn {
+  width:34px; height:34px; border-radius:50%;
+  background:var(--s2); border:1px solid var(--border2);
+  color:var(--muted); font-size:16px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; flex-shrink:0;
+}
+.back-btn:active { background:var(--s3); }
+.create-header h2 { font-family:'Space Grotesk',sans-serif; font-size:16px; color:var(--text); font-weight:600; letter-spacing:0; }
+
+.create-card {
+  width:min(380px,96vw);
+  background:var(--s1); border:1px solid var(--border);
+  border-radius:14px; padding:16px;
+  display:flex; flex-direction:column; gap:10px;
+}
+
+.cfg-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.cfg-item { display:flex; flex-direction:column; gap:5px; }
+.cfg-item label { font-size:10px; color:var(--muted); letter-spacing:.4px; }
+.cfg-item select {
+  background:var(--s2); border:1px solid var(--border);
+  color:var(--text); padding:8px 10px; border-radius:8px;
+  font-family:'Noto Sans Arabic',sans-serif; font-size:12px;
+  outline:none; width:100%;
+}
+.cfg-item select:focus { border-color:var(--gold); }
+select option { background:#161624; }
+
+.coop-badge {
+  background:#5588ff12; border:1px solid #5588ff22;
+  border-radius:8px; padding:10px 12px;
+  font-size:11px; color:#8899cc; line-height:1.6;
+}
+
+/* ═══ LOBBY SCREEN ═══ */
+#s-lobby { padding:16px; }
+.lobby-card {
+  width:min(340px,92vw);
+  background:var(--s1); border:1px solid var(--border2);
+  border-radius:16px; padding:18px;
+  display:flex; flex-direction:column; gap:10px; align-items:center;
+}
+
+.room-code-label { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+#roomCodeDisplay {
+  font-family:'Space Grotesk',sans-serif; font-size:34px; font-weight:700;
+  color:var(--gold); letter-spacing:10px;
+  text-shadow:0 0 20px #f5c84244;
+}
+
 #lobbyPlayers { width:100%; display:flex; flex-direction:column; gap:5px; }
 .player-row {
   display:flex; justify-content:space-between; align-items:center;
-  background:var(--surface2); padding:7px 12px; border-radius:8px;
+  background:var(--s2); padding:8px 12px; border-radius:8px;
   font-size:12px; border:1px solid var(--border);
 }
 .player-row .crown { color:var(--gold); }
-.player-row .ready { color:#66ffaa; font-size:10px; }
-
-#roomCodeDisplay {
-  font-family:'Cinzel',serif; font-size:30px; color:var(--gold);
-  letter-spacing:10px; text-align:center;
-  text-shadow:0 0 24px #f0c06066, 0 0 8px #f0c06033;
-  padding: 6px 0;
+.player-row .ready-tag {
+  font-size:9px; color:var(--green);
+  background:#3dffa015; padding:2px 8px; border-radius:20px;
+  border:1px solid #3dffa020;
 }
 
-/* ── HUD ── */
+#lobbySettings { font-size:10px; color:var(--muted); text-align:center; line-height:1.9; }
+
+/* ═══ COUNTDOWN ═══ */
+#s-countdown { background:var(--bg); }
+#cdNum {
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(80px,20vw,120px);
+  font-weight:700;
+  color:var(--gold);
+  text-shadow:0 0 60px #f5c84255, 0 0 120px #f5c84222;
+  line-height:1;
+}
+.cd-sub { color:var(--muted); font-size:13px; margin-top:8px; letter-spacing:2px; text-transform:uppercase; }
+
+/* ═══ GAME HUD ═══ */
 #hud {
   width:100%; max-width:700px;
-  display:flex; justify-content:space-between; align-items:center;
-  padding:5px 10px; font-size:10px; font-weight:700;
-  background:#08051099; backdrop-filter:blur(8px);
-  border-bottom:1px solid #2a2040;
-  flex-wrap:wrap; gap:3px;
+  display:flex; align-items:center; gap:0;
+  background:var(--s1);
+  border-bottom:1px solid var(--border);
+  height:36px; flex-shrink:0;
 }
-#hud .hitem { display:flex; gap:4px; align-items:center; color:var(--muted); }
-#hud .hitem span { color:var(--text); }
-#timerBar { height:2px; background:#1a1530; width:100%; }
+.hitem {
+  display:flex; align-items:center; gap:5px;
+  padding:0 10px; height:100%;
+  border-left:1px solid var(--border);
+  font-size:11px; font-weight:600;
+  color:var(--text);
+}
+.hitem:first-child { border-left:none; }
+.hitem .hi-label { color:var(--muted); font-size:9px; font-weight:400; }
+.hitem .hi-val { color:var(--text); }
+.hitem.hi-time .hi-val { color:var(--gold); font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:700; }
+.hitem.hi-break .hi-val.ready { color:#ff7744; }
+.hitem.hi-break .hi-val.cd { color:var(--muted); }
+#hudRole { display:none; }
+#hudRole .hi-val { color:var(--green); font-size:10px; }
+
+#timerBar { height:2px; background:var(--s3); width:100%; flex-shrink:0; }
 #timerFill { height:100%; background:var(--gold); transition:width 0.5s linear; }
 
-/* ── CANVAS WRAP ── */
+/* ═══ CANVAS ═══ */
 #wrap {
   position:relative; overflow:hidden;
-  border:1px solid #2a2040;
-  box-shadow:0 0 40px #5533aa11;
   flex:1; width:100%; max-width:700px;
+  border-top:none;
 }
 #gc { display:block; width:100%; height:100%; }
 
-/* ── SCOREBOARD (in-game overlay) ── */
+/* ═══ SCOREBOARD ═══ */
 #scoreboard {
-  position:absolute; top:8px; right:8px;
-  background:#080510cc; border:1px solid #2a2040;
+  position:absolute; top:8px; left:8px;
+  background:#08080fcc;
+  border:1px solid var(--border2);
   border-radius:8px; padding:6px 10px;
-  min-width:120px; font-size:10px;
-  display:none; backdrop-filter:blur(8px);
+  min-width:110px; font-size:10px;
+  display:none;
 }
 #scoreboard .sb-row {
   display:flex; justify-content:space-between; gap:10px;
-  padding:2px 0; border-bottom:1px solid #ffffff08;
+  padding:2px 0; border-bottom:1px solid #ffffff06;
+  align-items:center;
 }
 #scoreboard .sb-row:last-child { border:none; }
-#scoreboard .sb-name { color:#a098c8; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-#scoreboard .sb-pts { color:var(--gold); font-weight:700; }
-#scoreboard .sb-me { color:#88aaff; }
+#scoreboard .sb-name { color:#8882aa; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#scoreboard .sb-pts { color:var(--gold); font-weight:700; font-family:'Space Grotesk',sans-serif; }
+#scoreboard .sb-me { color:var(--blue); }
 
-/* ── MINIMAP ── */
+/* ═══ MINIMAP ═══ */
 #minimap {
   position:absolute; bottom:8px; right:8px;
-  border:1px solid #2a2040; opacity:0.75;
-  border-radius:4px;
+  border:1px solid var(--border2); border-radius:4px; opacity:0.7;
 }
 
-/* ── D-PAD ── */
+/* ═══ D-PAD — new design ═══ */
 #dpad {
-  display:none; position:relative;
-  width:136px; height:136px; flex-shrink:0;
-  margin:4px auto;
-}
-#dpad-center {
-  position:absolute; top:43px; left:43px;
-  width:50px; height:50px;
-  border-radius:50%;
+  display:none;
+  position:relative;
+  width:130px; height:130px;
+  flex-shrink:0; margin:6px auto 4px;
 }
 .db {
-  position:absolute; width:43px; height:43px;
-  background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.10);
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
-  color:#a098c8; font-size:14px;
+  position:absolute; width:40px; height:40px;
+  background:var(--s2);
+  border:1px solid var(--border2);
+  color:var(--muted); font-size:12px;
   display:flex; align-items:center; justify-content:center;
-  border-radius:12px; cursor:pointer;
-  user-select:none; -webkit-tap-highlight-color:transparent;
-  transition: all 0.08s;
-  box-shadow: 0 2px 8px #00000044, inset 0 1px 0 #ffffff08;
+  border-radius:10px; cursor:pointer;
+  user-select:none;
+  transition: background 0.08s, transform 0.07s;
+  font-family:'Space Grotesk',sans-serif; font-weight:700;
 }
 .db.on {
-  background:rgba(240,192,96,0.18);
-  border-color:rgba(240,192,96,0.45);
-  box-shadow:0 0 14px #f0c06033;
-  transform:scale(0.92);
+  background:var(--gold);
+  border-color:var(--gold);
+  color:#09090f;
+  transform:scale(0.91);
 }
-#db-u{top:0;left:46px}
-#db-d{bottom:0;left:46px}
-#db-l{top:46px;left:0}
-#db-r{top:46px;right:0}
+/* Cross layout: center at 45,45 */
+#db-u { top:0;  left:45px; border-radius:10px 10px 4px 4px; }
+#db-d { bottom:0; left:45px; border-radius:4px 4px 10px 10px; }
+#db-l { top:45px; left:0; border-radius:10px 4px 4px 10px; }
+#db-r { top:45px; right:0; border-radius:4px 10px 10px 4px; }
+#dpad-center { display:none; }
 
-/* ── BREAK INDICATOR ── */
+/* ═══ BREAK INDICATOR ═══ */
 #brkInd {
   position:absolute; bottom:8px; left:8px;
-  background:#080510bb; border:1px solid #2a2040;
+  background:#08080fcc; border:1px solid var(--border2);
   border-radius:6px; padding:4px 8px;
-  font-size:9px; color:#ff8844;
-  display:none; backdrop-filter:blur(8px);
+  font-size:9px; color:#ff7744;
+  display:none; font-weight:600; letter-spacing:.3px;
 }
 
-/* ── END SCREEN ── */
-#endPodium { width:100%; display:flex; flex-direction:column; gap:6px; }
+/* ═══ END SCREEN ═══ */
+#s-end { padding:16px; }
+.end-title {
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(18px,5vw,26px); font-weight:700;
+  color:var(--text); text-align:center; margin-bottom:4px;
+}
+#endPodium { width:100%; display:flex; flex-direction:column; gap:5px; margin-bottom:4px; }
 .podium-row {
   display:flex; align-items:center; gap:10px;
-  padding:9px 14px; border-radius:8px;
-  background:var(--surface2); font-size:13px;
+  padding:10px 14px; border-radius:10px;
+  background:var(--s2); font-size:13px;
   border:1px solid var(--border);
+  transition: background 0.2s;
 }
-.podium-row.first { background:#f0c06015; border-color:#f0c06044; }
-.podium-row .rank { font-size:18px; width:28px; text-align:center; }
-.podium-row .pname { flex:1; font-weight:700; }
-.podium-row .ppts { color:var(--gold); font-weight:700; font-size:15px; }
+.podium-row.first { background:linear-gradient(135deg,#f5c84212,#e8a02008); border-color:#f5c84230; }
+.podium-row .rank { font-size:20px; width:26px; text-align:center; }
+.podium-row .pname { flex:1; font-weight:600; }
+.podium-row .ppts { color:var(--gold); font-weight:700; font-family:'Space Grotesk',sans-serif; font-size:15px; }
 
-/* ── TOAST ── */
+/* ═══ TOAST ═══ */
 #toast {
-  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-  background:var(--surface2); border:1px solid var(--border);
-  color:var(--text); padding:8px 18px; border-radius:20px;
-  font-size:11px; opacity:0; transition:opacity 0.25s;
+  position:fixed; bottom:16px; left:50%; transform:translateX(-50%) translateY(8px);
+  background:var(--s2); border:1px solid var(--border2);
+  color:var(--text); padding:8px 16px; border-radius:20px;
+  font-size:11px; opacity:0;
+  transition:opacity 0.2s, transform 0.2s;
   pointer-events:none; z-index:100; white-space:nowrap;
-  backdrop-filter:blur(12px);
 }
-#toast.show { opacity:1; }
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
 @media (pointer:coarse) { #dpad { display:block; } }
 @media (pointer:fine)   { #dpad { display:block; } }
-@media (max-width:500px) { #hud { font-size:9px; } }
+@media (max-width:500px) { #hud { font-size:9px; } #hud .hi-label { display:none; } }
 </style>
 </head>
 <body>
 
 <!-- ══ SCREEN: MENU ══ -->
 <div id="s-menu" class="screen active">
-  <h1>⚔ متاهة الكنوز ⚔</h1>
-  <div class="card">
-    <label>اسمك في اللعبة
-      <input id="nameInput" placeholder="أدخل اسمك..." maxlength="16" value="">
-    </label>
-    <button class="btn" id="btnCreate">🏠 إنشاء غرفة جديدة</button>
-    <div class="divider">أو</div>
-    <div class="row">
-      <label>كود الغرفة
-        <input id="joinCode" placeholder="XXXX" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;text-align:center">
-      </label>
+  <div class="menu-logo">
+    🏺 متاهة الكنوز
+    <span>MAZE · ONLINE</span>
+  </div>
+  <div class="menu-card">
+    <span class="input-label">اسمك في اللعبة</span>
+    <input class="input-field" id="nameInput" placeholder="أدخل اسمك..." maxlength="16">
+
+    <button class="btn-primary" id="btnCreate">إنشاء غرفة جديدة</button>
+
+    <div class="sep">أو انضم</div>
+
+    <div class="join-row">
+      <input class="input-field" id="joinCode" placeholder="XXXX" maxlength="6" style="text-transform:uppercase">
+      <button class="btn-ghost" id="btnJoin">انضم ←</button>
     </div>
-    <button class="btn secondary" id="btnJoin">🚪 انضم لغرفة</button>
-    <div class="divider">أو</div>
-    <button class="btn secondary" id="btnSolo">🎮 لعب منفرد</button>
+
+    <div class="sep">أو</div>
+
+    <button class="btn-ghost" id="btnSolo">🎮 لعب منفرد</button>
   </div>
 </div>
 
 <!-- ══ SCREEN: CREATE ROOM ══ -->
 <div id="s-create" class="screen">
-  <h2>⚙ إعدادات الغرفة</h2>
-  <div class="card">
-    <div class="row">
-      <label>حجم المتاهة
+  <div class="create-header">
+    <div class="back-btn" id="btnBackCreate">←</div>
+    <h2>إعدادات الغرفة</h2>
+  </div>
+  <div class="create-card">
+    <div class="cfg-grid">
+      <div class="cfg-item">
+        <label>حجم المتاهة</label>
         <select id="cfgSize">
-          <option value="sm">صغيرة (11×11)</option>
-          <option value="md">متوسطة (17×17)</option>
-          <option value="lg" selected>كبيرة (25×25)</option>
-          <option value="xl">ضخمة (31×31)</option>
-          <option value="xxl">عملاقة (41×41)</option>
+          <option value="sm">صغيرة 11×11</option>
+          <option value="md">متوسطة 17×17</option>
+          <option value="lg" selected>كبيرة 25×25</option>
+          <option value="xl">ضخمة 31×31</option>
+          <option value="xxl">عملاقة 41×41</option>
         </select>
-      </label>
-      <label>أقصى لاعبين
+      </div>
+      <div class="cfg-item">
+        <label>أقصى لاعبين</label>
         <select id="cfgMaxPlayers">
-          <option value="2">2</option>
-          <option value="4" selected>4</option>
-          <option value="6">6</option>
-          <option value="8">8</option>
-          <option value="10">10</option>
+          <option value="2">2 لاعبين</option>
+          <option value="4" selected>4 لاعبين</option>
+          <option value="6">6 لاعبين</option>
+          <option value="8">8 لاعبين</option>
+          <option value="10">10 لاعبين</option>
         </select>
-      </label>
+      </div>
     </div>
-    <label>🎮 نوع اللعبة
+
+    <div class="cfg-item">
+      <label>نوع اللعبة</label>
       <select id="cfgGameMode">
         <option value="ffa">فردي – كل واحد لنفسه</option>
-        <option value="coop">🤝 تعاوني – فرق من اتنين (داشر + حيطة)</option>
+        <option value="coop">🤝 تعاوني – فرق من اتنين</option>
       </select>
-    </label>
-    <div id="coopHint" style="display:none;background:#5599ff15;border:1px solid #5599ff33;border-radius:6px;padding:10px;font-size:11px;color:#88aaff;line-height:1.7;">
-      <b>مود تعاوني:</b> كل أتنين يكوّنوا فريق<br>
-      🏃 <b>الداشر</b> (الأول في الفريق): يتحرك بالداش، يجمع الكنوز<br>
-      🧱 <b>الحيطة</b> (التاني في الفريق): يمشي ببطء، مش بيجمع كنوز<br>
-      الحيطة تعوق صاحبها في الفريق بس مش الفرق التانية 😄<br>
-      النقاط بتحسب للفريق كله
     </div>
-    <div class="row">
-      <label>وقت المباراة (ثانية)
+
+    <div id="coopHint" style="display:none" class="coop-badge">
+      كل أتنين يكوّنوا فريق — الداشر يجمع الكنوز، الحيطة تحمي المسار
+    </div>
+
+    <div class="cfg-grid">
+      <div class="cfg-item">
+        <label>وقت المباراة</label>
         <select id="cfgTime">
           <option value="60">60 ث</option>
           <option value="120" selected>120 ث</option>
           <option value="180">180 ث</option>
           <option value="300">300 ث</option>
-          <option value="0">بدون وقت</option>
+          <option value="0">بلا وقت</option>
         </select>
-      </label>
-      <label>سكور الفوز
+      </div>
+      <div class="cfg-item">
+        <label>سكور الفوز</label>
         <select id="cfgWinScore">
-          <option value="0">بدون حد</option>
+          <option value="0">بلا حد</option>
           <option value="300">300</option>
           <option value="500" selected>500</option>
           <option value="1000">1000</option>
           <option value="2000">2000</option>
         </select>
-      </label>
-    </div>
-    <div class="row">
-      <label>الاختراق كل (ثانية)
+      </div>
+      <div class="cfg-item">
+        <label>cooldown الاختراق</label>
         <select id="cfgBreak">
           <option value="3" selected>3 ث</option>
           <option value="5">5 ث</option>
           <option value="10">10 ث</option>
-          <option value="0">حر (بدون cooldown)</option>
+          <option value="0">حر</option>
         </select>
-      </label>
-      <label>countdown قبل البدء
+      </div>
+      <div class="cfg-item">
+        <label>Countdown</label>
         <select id="cfgCountdown">
           <option value="3" selected>3 ث</option>
           <option value="5">5 ث</option>
           <option value="10">10 ث</option>
         </select>
-      </label>
+      </div>
     </div>
-    <button class="btn" id="btnConfirmCreate">✅ إنشاء الغرفة</button>
-    <button class="btn secondary" id="btnBackCreate">↩ رجوع</button>
+
+    <button class="btn-primary" id="btnConfirmCreate">إنشاء الغرفة ←</button>
   </div>
 </div>
 
 <!-- ══ SCREEN: LOBBY ══ -->
 <div id="s-lobby" class="screen">
-  <h2>🏠 الغرفة</h2>
-  <div class="card" style="align-items:center;">
-    <div style="font-size:12px;color:#888;">شارك الكود مع أصحابك</div>
+  <div class="lobby-card">
+    <div class="room-code-label">كود الغرفة</div>
     <div id="roomCodeDisplay">----</div>
     <div id="lobbyPlayers"></div>
-    <div id="lobbySettings" style="font-size:11px;color:#888;text-align:center;line-height:1.8;"></div>
-    <button class="btn" id="btnStartGame" style="display:none">▶ ابدأ اللعبة</button>
-    <div id="waitingMsg" style="color:#888;font-size:12px;">في انتظار صاحب الغرفة...</div>
-    <button class="btn secondary" id="btnLeaveLobby">↩ مغادرة</button>
+    <div id="lobbySettings"></div>
+    <button class="btn-primary" id="btnStartGame" style="display:none">▶ ابدأ اللعبة</button>
+    <div id="waitingMsg" style="color:var(--muted);font-size:12px;">في انتظار صاحب الغرفة...</div>
+    <button class="btn-ghost" id="btnLeaveLobby">مغادرة</button>
   </div>
 </div>
 
 <!-- ══ SCREEN: COUNTDOWN ══ -->
 <div id="s-countdown" class="screen">
-  <div style="font-size:80px;font-family:Cinzel;color:var(--gold);text-shadow:0 0 40px var(--gold)" id="cdNum">3</div>
-  <div style="color:#aaa;font-size:14px;">استعد...</div>
+  <div id="cdNum">3</div>
+  <div class="cd-sub">استعد</div>
 </div>
 
 <!-- ══ SCREEN: GAME ══ -->
 <div id="s-game" class="screen" style="padding:0;gap:0;">
   <div id="hud">
-    <div class="hitem">⏱ <span id="hudTime">--</span></div>
-    <div class="hitem">💎 <span id="hudCollected">0/0</span></div>
-    <div class="hitem">🏆 <span id="hudScore">0</span></div>
-    <div class="hitem">💥 <span id="hudBreak" style="color:#ff8844">جاهز</span></div>
-    <div class="hitem" id="hudRole" style="display:none"></div>
+    <div class="hitem hi-time">
+      <span class="hi-label">⏱</span>
+      <span class="hi-val" id="hudTime">--</span>
+    </div>
+    <div class="hitem">
+      <span class="hi-label">💎</span>
+      <span class="hi-val" id="hudCollected">0/0</span>
+    </div>
+    <div class="hitem">
+      <span class="hi-label">★</span>
+      <span class="hi-val" id="hudScore">0</span>
+    </div>
+    <div class="hitem hi-break">
+      <span class="hi-label">💥</span>
+      <span class="hi-val ready" id="hudBreak">جاهز</span>
+    </div>
+    <div class="hitem" id="hudRole"></div>
   </div>
   <div id="timerBar"><div id="timerFill"></div></div>
   <div id="wrap">
     <canvas id="gc"></canvas>
     <div id="scoreboard"></div>
     <canvas id="minimap" width="80" height="80"></canvas>
-    <div id="brkInd">💥 اختراق جاهز!</div>
+    <div id="brkInd">💥 جاهز!</div>
   </div>
   <div id="dpad">
     <div id="dpad-center"></div>
-    <div class="db" id="db-u">▲</div>
-    <div class="db" id="db-d">▼</div>
-    <div class="db" id="db-l">◀</div>
-    <div class="db" id="db-r">▶</div>
+    <div class="db" id="db-u">↑</div>
+    <div class="db" id="db-d">↓</div>
+    <div class="db" id="db-l">←</div>
+    <div class="db" id="db-r">→</div>
   </div>
 </div>
 
 <!-- ══ SCREEN: END ══ -->
-<div id="s-end" class="screen">
-  <h1 id="endTitle">🏆 انتهت اللعبة</h1>
-  <div class="card">
+<div id="s-end" class="screen" style="padding:16px;gap:12px;">
+  <div class="end-title" id="endTitle">انتهت اللعبة</div>
+  <div class="lobby-card" style="width:min(340px,92vw)">
     <div id="endPodium"></div>
-    <button class="btn" id="btnPlayAgain" style="display:none">🔄 لعبة جديدة (نفس الغرفة)</button>
-    <button class="btn secondary" id="btnBackMenu">🏠 القائمة الرئيسية</button>
+    <button class="btn-primary" id="btnPlayAgain" style="display:none">↺ لعبة جديدة</button>
+    <button class="btn-ghost" id="btnBackMenu">القائمة الرئيسية</button>
   </div>
 </div>
 
@@ -450,6 +599,9 @@ let gc, ctx, VW, VH;
 
 // Touch
 let touchStartX = 0, touchStartY = 0;
+
+// Wall tint cache (computed once per game in coop mode)
+let cachedWallTints = null;
 
 // ══════════════════════════════════════════════════
 //  SCREEN MANAGER
@@ -739,6 +891,23 @@ function onGameStart(d) {
     };
   });
   myPlayer = players[myId];
+
+  // Precompute wall tints for coop mode (done once)
+  cachedWallTints = null;
+  if(roomConfig.gameMode==='coop'){
+    cachedWallTints={};
+    const teamList=[];
+    const seen={};
+    Object.values(players).forEach(p=>{
+      if(!(p.teamId in seen)){ seen[p.teamId]=true; teamList.push({col:p.col,row:p.row,animal:p.animal||'🐭'}); }
+    });
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+      if(maze[r][c]!==1) continue;
+      let minD=Infinity,ani=null;
+      for(const t of teamList){ const d=Math.abs(t.col-c)+Math.abs(t.row-r); if(d<minD){minD=d;ani=t.animal;} }
+      if(minD<=12) cachedWallTints[r*1000+c]=ani;
+    }
+  }
 
   // Canvas setup
   setupCanvas();
@@ -1086,41 +1255,29 @@ function drawGame(){
     }
   }
 
-  // Walls - with depth and shine
+  // Walls
+  const isCoop = roomConfig.gameMode==='coop';
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(maze[r][c]===1){
       const x=c*CELL,y=r*CELL;
+      let wallCol='#12102a', wallTop='#1e1a40', wallLeft='#181530', wallShine='#302860', wallBot='#090815', wallRight='#0c0b1e';
 
-      // In coop mode, find if any player "owns" this area by proximity - use team color for walls
-      let wallCol = '#1a1035';
-      let wallTop = '#2a1850';
-      let wallLeft = '#221440';
-      let wallShine = '#3a2266';
-      let wallBot = '#0a0820';
-      let wallRight = '#0e0c1c';
-
-      if(roomConfig.gameMode==='coop'){
-        // Find closest player and use their team/animal color
-        let minDist=Infinity, closestAnimal=null;
-        Object.values(players).forEach(p=>{
-          const dist=Math.abs(p.col-c)+Math.abs(p.row-r);
-          if(dist<minDist){ minDist=dist; closestAnimal=p.animal; }
-        });
-        if(closestAnimal && ANIMAL_TEAM_WALL_COLORS[closestAnimal] && minDist<=8){
-          const tc=ANIMAL_TEAM_WALL_COLORS[closestAnimal];
-          // Tint wall with team color (subtle)
-          wallCol=hexMix(tc,'#12082a',0.18);
-          wallTop=hexMix(tc,'#1e0e42',0.25);
-          wallShine=hexMix(tc,'#3a2280',0.35);
+      if(isCoop && cachedWallTints){
+        const ani=cachedWallTints[r*1000+c];
+        if(ani && ANIMAL_TEAM_WALL_COLORS[ani]){
+          const tc=ANIMAL_TEAM_WALL_COLORS[ani];
+          wallCol=hexMix(tc,'#12102a',0.22);
+          wallTop=hexMix(tc,'#1e1a40',0.28);
+          wallShine=hexMix(tc,'#302860',0.38);
         }
       }
 
       ctx.fillStyle=wallCol; ctx.fillRect(x,y,CELL,CELL);
-      ctx.fillStyle=wallTop; ctx.fillRect(x,y,CELL,5);
-      ctx.fillStyle=wallLeft; ctx.fillRect(x,y,4,CELL);
+      ctx.fillStyle=wallTop; ctx.fillRect(x,y,CELL,4);
+      ctx.fillStyle=wallLeft; ctx.fillRect(x,y,3,CELL);
       ctx.fillStyle=wallShine; ctx.fillRect(x,y,2,2);
-      ctx.fillStyle=wallBot; ctx.fillRect(x,y+CELL-3,CELL,3);
-      ctx.fillStyle=wallRight; ctx.fillRect(x+CELL-3,y,3,CELL);
+      ctx.fillStyle=wallBot; ctx.fillRect(x,y+CELL-2,CELL,2);
+      ctx.fillStyle=wallRight; ctx.fillRect(x+CELL-2,y,2,CELL);
     }
   }
 
@@ -1409,10 +1566,10 @@ function updateGameHUD(){
     roleEl.style.display='flex';
     const myAnimal = myPlayer.animal||'🐭';
     if(myPlayer.role==='wall'){
-      roleEl.innerHTML=`${myAnimal} <span style="color:#ffaa44">أنت الحيطة</span>`;
+      roleEl.innerHTML=`<span class="hi-val" style="color:#ffaa44">${myAnimal} حيطة</span>`;
       document.getElementById('hudBreak').parentElement.style.display='none';
     } else {
-      roleEl.innerHTML=`${myAnimal} <span style="color:#66ffaa">أنت الداشر</span>`;
+      roleEl.innerHTML=`<span class="hi-val" style="color:var(--green)">${myAnimal} داشر</span>`;
       document.getElementById('hudBreak').parentElement.style.display='flex';
     }
   } else {
@@ -1423,12 +1580,12 @@ function updateGameHUD(){
   const brkInd=document.getElementById('brkInd');
   if(myPlayer.role!=='wall'){
     if(myPlayer.breakCD<=0){
-      brkEl.textContent='جاهز'; brkEl.style.color='#ff8844';
-      brkInd.textContent='💥 اختراق جاهز!'; brkInd.style.color='#ff8844';
+      brkEl.textContent='جاهز'; brkEl.className='hi-val ready';
+      brkInd.textContent='💥 جاهز!'; brkInd.style.color='#ff7744';
     } else {
       const secs=Math.ceil(myPlayer.breakCD/60);
-      brkEl.textContent=secs+'s'; brkEl.style.color='#666688';
-      brkInd.textContent=`⏳ ${secs}s`; brkInd.style.color='#666688';
+      brkEl.textContent=secs+'s'; brkEl.className='hi-val cd';
+      brkInd.textContent=`⏳ ${secs}s`; brkInd.style.color='var(--muted)';
     }
   } else {
     brkInd.style.display='none';
@@ -1620,6 +1777,7 @@ function startSolo(){
 
   setupCanvas();
   particles=[]; floats=[]; pendingDash=null; localDash=null;
+  cachedWallTints=null;
   gameRunning=true;
 
   // Hide online elements
