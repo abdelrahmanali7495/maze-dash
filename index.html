@@ -9,16 +9,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Noto+Sans+Arabic:wght@400;700&display=swap');
 
 :root {
-  --gold: #e8c87a;
-  --dark: #0b0614;
-  --purple: #1a0a2e;
-  --accent: #5599ff;
+  --gold: #f0c060;
+  --dark: #080510;
+  --surface: #100c1e;
+  --surface2: #16112a;
+  --border: #2a2040;
+  --accent: #6677ff;
+  --text: #e8e0f8;
+  --muted: #7068a0;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body {
   width:100%; height:100%;
   background:var(--dark);
-  color:#fff;
+  color:var(--text);
   font-family:'Noto Sans Arabic',sans-serif;
   overflow:hidden;
   touch-action:none;
@@ -27,92 +31,97 @@ html, body {
 
 /* ── SCREENS ── */
 .screen { display:none; flex-direction:column; align-items:center; justify-content:center;
-  width:100%; height:100%; gap:14px; padding:20px; }
+  width:100%; height:100%; gap:12px; padding:16px; }
 .screen.active { display:flex; }
 
 h1 { font-family:'Cinzel',serif; color:var(--gold);
-  font-size:clamp(20px,5vw,36px); text-shadow:0 0 30px var(--gold);
-  letter-spacing:3px; text-align:center; }
-h2 { font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(14px,3vw,22px); }
+  font-size:clamp(18px,4.5vw,32px);
+  letter-spacing:2px; text-align:center;
+  text-shadow: 0 0 20px #f0c06055, 0 2px 4px #00000088;
+}
+h2 { font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(13px,3vw,20px); letter-spacing:1px; }
 
 .card {
-  background:#ffffff08; border:1px solid #ffffff15;
-  border-radius:8px; padding:20px 28px;
-  display:flex; flex-direction:column; gap:12px;
-  width:min(420px,95vw);
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px; padding:18px 22px;
+  display:flex; flex-direction:column; gap:10px;
+  width:min(400px,94vw);
+  box-shadow: 0 8px 32px #00000066, inset 0 1px 0 #ffffff08;
 }
 
-label { font-size:12px; color:#aaa; display:flex; flex-direction:column; gap:5px; }
+label { font-size:11px; color:var(--muted); display:flex; flex-direction:column; gap:4px; letter-spacing:.5px; }
 input, select {
-  background:#ffffff0f; border:1px solid #ffffff25;
-  color:#fff; padding:10px 14px; border-radius:4px;
-  font-family:'Noto Sans Arabic',sans-serif; font-size:14px;
-  outline:none; width:100%;
+  background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); padding:9px 12px; border-radius:8px;
+  font-family:'Noto Sans Arabic',sans-serif; font-size:13px;
+  outline:none; width:100%; transition: border-color 0.15s;
 }
-input:focus, select:focus { border-color:var(--gold); }
-select option { background:#1a0a2e; }
+input:focus, select:focus { border-color:var(--gold); background:#1c1535; }
+select option { background:#16112a; }
 
-.row { display:flex; gap:10px; }
+.row { display:flex; gap:8px; }
 .row label { flex:1; }
 
 .btn {
-  background:linear-gradient(135deg,var(--gold),#c8960a);
-  color:var(--dark); border:none; padding:12px 24px;
-  font-family:'Cinzel',serif; font-size:13px; font-weight:900;
-  cursor:pointer; border-radius:4px; letter-spacing:1px;
-  box-shadow:0 4px 20px #e8c87a33; transition:all 0.15s;
+  background:linear-gradient(135deg,#f0c060,#c8880a);
+  color:#0d0a18; border:none; padding:11px 20px;
+  font-family:'Cinzel',serif; font-size:12px; font-weight:900;
+  cursor:pointer; border-radius:8px; letter-spacing:.8px;
+  box-shadow:0 3px 16px #f0c06028; transition:all 0.13s;
   width:100%;
 }
-.btn:hover { transform:translateY(-2px); box-shadow:0 8px 30px #e8c87a55; }
-.btn:active { transform:translateY(1px); }
+.btn:active { transform:scale(0.97); }
 .btn.secondary {
-  background:#ffffff15; color:#ccc;
-  box-shadow:none; border:1px solid #ffffff20;
+  background:var(--surface2); color:var(--muted);
+  box-shadow:none; border:1px solid var(--border);
+  font-family:'Noto Sans Arabic',sans-serif; font-size:13px; font-weight:400; letter-spacing:0;
 }
-.btn.secondary:hover { background:#ffffff25; }
-.btn.danger { background:linear-gradient(135deg,#ff4444,#cc0000); color:#fff; }
+.btn.secondary:active { background:#1c1535; }
+.btn.danger { background:linear-gradient(135deg,#ff4455,#cc0022); color:#fff; }
 
-.divider { text-align:center; color:#555; font-size:11px; position:relative; }
+.divider { text-align:center; color:#3a3060; font-size:11px; position:relative; }
 .divider::before,.divider::after {
-  content:''; position:absolute; top:50%; width:42%; height:1px; background:#333;
+  content:''; position:absolute; top:50%; width:40%; height:1px; background:#2a2040;
 }
 .divider::before { left:0; } .divider::after { right:0; }
 
 /* ── LOBBY ── */
-#lobbyPlayers { width:100%; display:flex; flex-direction:column; gap:6px; }
+#lobbyPlayers { width:100%; display:flex; flex-direction:column; gap:5px; }
 .player-row {
   display:flex; justify-content:space-between; align-items:center;
-  background:#ffffff08; padding:8px 14px; border-radius:4px;
-  font-size:13px;
+  background:var(--surface2); padding:7px 12px; border-radius:8px;
+  font-size:12px; border:1px solid var(--border);
 }
 .player-row .crown { color:var(--gold); }
-.player-row .ready { color:#44ff88; font-size:11px; }
+.player-row .ready { color:#66ffaa; font-size:10px; }
 
 #roomCodeDisplay {
-  font-family:'Cinzel',serif; font-size:28px; color:var(--gold);
-  letter-spacing:8px; text-align:center; text-shadow:0 0 20px var(--gold);
+  font-family:'Cinzel',serif; font-size:30px; color:var(--gold);
+  letter-spacing:10px; text-align:center;
+  text-shadow:0 0 24px #f0c06066, 0 0 8px #f0c06033;
+  padding: 6px 0;
 }
 
 /* ── HUD ── */
 #hud {
   width:100%; max-width:700px;
   display:flex; justify-content:space-between; align-items:center;
-  padding:6px 12px; font-size:11px; font-weight:700;
-  background:#0b061499; border-bottom:1px solid #ffffff10;
-  flex-wrap:wrap; gap:4px;
+  padding:5px 10px; font-size:10px; font-weight:700;
+  background:#08051099; backdrop-filter:blur(8px);
+  border-bottom:1px solid #2a2040;
+  flex-wrap:wrap; gap:3px;
 }
-#hud .hitem { display:flex; gap:5px; align-items:center; color:var(--gold); }
-#hud .hitem span { color:#fff; }
-#timerBar {
-  height:3px; background:#333; width:100%;
-}
+#hud .hitem { display:flex; gap:4px; align-items:center; color:var(--muted); }
+#hud .hitem span { color:var(--text); }
+#timerBar { height:2px; background:#1a1530; width:100%; }
 #timerFill { height:100%; background:var(--gold); transition:width 0.5s linear; }
 
 /* ── CANVAS WRAP ── */
 #wrap {
   position:relative; overflow:hidden;
-  border:1px solid #3a2a5a;
-  box-shadow:0 0 60px #6633ff22;
+  border:1px solid #2a2040;
+  box-shadow:0 0 40px #5533aa11;
   flex:1; width:100%; max-width:700px;
 }
 #gc { display:block; width:100%; height:100%; }
@@ -120,97 +129,98 @@ select option { background:#1a0a2e; }
 /* ── SCOREBOARD (in-game overlay) ── */
 #scoreboard {
   position:absolute; top:8px; right:8px;
-  background:#0b0614cc; border:1px solid #3a2a5a;
-  border-radius:4px; padding:8px 12px;
-  min-width:130px; font-size:11px;
-  display:none;
+  background:#080510cc; border:1px solid #2a2040;
+  border-radius:8px; padding:6px 10px;
+  min-width:120px; font-size:10px;
+  display:none; backdrop-filter:blur(8px);
 }
 #scoreboard .sb-row {
-  display:flex; justify-content:space-between; gap:12px;
-  padding:2px 0; border-bottom:1px solid #ffffff0a;
+  display:flex; justify-content:space-between; gap:10px;
+  padding:2px 0; border-bottom:1px solid #ffffff08;
 }
 #scoreboard .sb-row:last-child { border:none; }
-#scoreboard .sb-name { color:#ccc; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#scoreboard .sb-name { color:#a098c8; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 #scoreboard .sb-pts { color:var(--gold); font-weight:700; }
-#scoreboard .sb-me { color:var(--accent); }
+#scoreboard .sb-me { color:#88aaff; }
 
 /* ── MINIMAP ── */
 #minimap {
   position:absolute; bottom:8px; right:8px;
-  border:1px solid #3a2a5a; opacity:0.8;
+  border:1px solid #2a2040; opacity:0.75;
+  border-radius:4px;
 }
 
 /* ── D-PAD ── */
 #dpad {
   display:none; position:relative;
-  width:150px; height:150px; flex-shrink:0;
-  margin:6px auto;
+  width:136px; height:136px; flex-shrink:0;
+  margin:4px auto;
 }
 #dpad-center {
-  position:absolute; top:50px; left:50px;
+  position:absolute; top:43px; left:43px;
   width:50px; height:50px;
-  background:radial-gradient(circle,#ffffff08,#ffffff03);
   border-radius:50%;
-  border:1px solid #ffffff10;
 }
 .db {
-  position:absolute; width:50px; height:50px;
-  background:rgba(255,255,255,0.06);
-  border:1.5px solid rgba(255,255,255,0.12);
-  backdrop-filter:blur(6px);
-  -webkit-backdrop-filter:blur(6px);
-  color:var(--gold); font-size:18px;
+  position:absolute; width:43px; height:43px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.10);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  color:#a098c8; font-size:14px;
   display:flex; align-items:center; justify-content:center;
-  border-radius:14px; cursor:pointer;
+  border-radius:12px; cursor:pointer;
   user-select:none; -webkit-tap-highlight-color:transparent;
-  transition: background 0.1s, transform 0.08s, box-shadow 0.1s;
-  box-shadow: 0 2px 12px #00000033, inset 0 1px 0 #ffffff10;
+  transition: all 0.08s;
+  box-shadow: 0 2px 8px #00000044, inset 0 1px 0 #ffffff08;
 }
 .db.on {
-  background:rgba(232,200,122,0.22);
-  border-color:rgba(232,200,122,0.5);
-  box-shadow:0 0 18px #e8c87a44, inset 0 1px 0 #e8c87a33;
-  transform:scale(0.93);
+  background:rgba(240,192,96,0.18);
+  border-color:rgba(240,192,96,0.45);
+  box-shadow:0 0 14px #f0c06033;
+  transform:scale(0.92);
 }
-#db-u{top:0;left:50px}
-#db-d{bottom:0;left:50px}
-#db-l{top:50px;left:0}
-#db-r{top:50px;right:0}
+#db-u{top:0;left:46px}
+#db-d{bottom:0;left:46px}
+#db-l{top:46px;left:0}
+#db-r{top:46px;right:0}
 
 /* ── BREAK INDICATOR ── */
 #brkInd {
   position:absolute; bottom:8px; left:8px;
-  background:#0b0614cc; border:1px solid #3a2a5a;
-  border-radius:4px; padding:5px 10px;
-  font-size:10px; color:#ff8844;
-  display:none;
+  background:#080510bb; border:1px solid #2a2040;
+  border-radius:6px; padding:4px 8px;
+  font-size:9px; color:#ff8844;
+  display:none; backdrop-filter:blur(8px);
 }
 
 /* ── END SCREEN ── */
-#endPodium { width:100%; display:flex; flex-direction:column; gap:8px; }
+#endPodium { width:100%; display:flex; flex-direction:column; gap:6px; }
 .podium-row {
-  display:flex; align-items:center; gap:12px;
-  padding:10px 16px; border-radius:6px;
-  background:#ffffff08; font-size:14px;
+  display:flex; align-items:center; gap:10px;
+  padding:9px 14px; border-radius:8px;
+  background:var(--surface2); font-size:13px;
+  border:1px solid var(--border);
 }
-.podium-row.first { background:#e8c87a22; border:1px solid var(--gold); }
-.podium-row .rank { font-size:20px; width:30px; text-align:center; }
+.podium-row.first { background:#f0c06015; border-color:#f0c06044; }
+.podium-row .rank { font-size:18px; width:28px; text-align:center; }
 .podium-row .pname { flex:1; font-weight:700; }
-.podium-row .ppts { color:var(--gold); font-weight:700; font-size:16px; }
+.podium-row .ppts { color:var(--gold); font-weight:700; font-size:15px; }
 
 /* ── TOAST ── */
 #toast {
   position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-  background:#1a0a2e; border:1px solid #3a2a5a;
-  color:#fff; padding:10px 20px; border-radius:20px;
-  font-size:12px; opacity:0; transition:opacity 0.3s;
+  background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); padding:8px 18px; border-radius:20px;
+  font-size:11px; opacity:0; transition:opacity 0.25s;
   pointer-events:none; z-index:100; white-space:nowrap;
+  backdrop-filter:blur(12px);
 }
 #toast.show { opacity:1; }
 
 @media (pointer:coarse) { #dpad { display:block; } }
 @media (pointer:fine)   { #dpad { display:block; } }
-@media (max-width:500px) { #hud { font-size:10px; } }
+@media (max-width:500px) { #hud { font-size:9px; } }
 </style>
 </head>
 <body>
@@ -376,9 +386,25 @@ select option { background:#1a0a2e; }
 //  CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════
 const ABLY_KEY = 'UcDcBw.YJJl6g:LDwkET05nlae7VeirAz44uL8hE16cLZ8MyrSFwCnolk';
-const CELL = 32;
+const CELL = 36;
 const SIZE_MAP = { sm:[11,11], md:[17,17], lg:[25,25], xl:[31,31], xxl:[41,41] };
-const PLAYER_COLORS = ['#5599ff','#ff5577','#55ff99','#ffaa33','#cc55ff','#55ccff','#ff8833','#88ff44'];
+const PLAYER_COLORS = ['#5588ff','#ff5566','#44dd88','#ffaa33','#cc55ff','#55ccff','#ff8833','#88ff44'];
+
+// Animal emojis for players (in order)
+const PLAYER_ANIMALS = ['🐭','🐱','🦄','🐒','🐸','🦊','🐼','🐧'];
+
+// Team wall colors for coop mode (matching animal theme)
+// 🐭=white/gray, 🐱=yellow, 🦄=purple, 🐒=orange, 🐸=green, 🦊=orange, 🐼=white, 🐧=blue
+const ANIMAL_TEAM_WALL_COLORS = {
+  '🐭': '#c0c0c0',
+  '🐱': '#f0d060',
+  '🦄': '#cc88ff',
+  '🐒': '#ff9944',
+  '🐸': '#44cc44',
+  '🦊': '#ff7733',
+  '🐼': '#dddddd',
+  '🐧': '#4499ff',
+};
 
 const TREASURE_DEF = [
   {sym:'💎', val:50,  glow:'#44ddff'},
@@ -645,6 +671,7 @@ async function hostStartGame() {
     spawns: playerSpawns,
     playerList: members.map((m,i)=>({
       id:m.clientId, name:m.data?.name||m.clientId, color:PLAYER_COLORS[i%PLAYER_COLORS.length],
+      animal: PLAYER_ANIMALS[i%PLAYER_ANIMALS.length],
       teamId: roomConfig.gameMode==='coop' ? Math.floor(i/2) : i,
       role:   roomConfig.gameMode==='coop' ? (i%2===0?'dasher':'wall') : 'dasher'
     }))
@@ -702,6 +729,7 @@ function onGameStart(d) {
     const spawn = d.spawns[p.id] || {c:1,r:1};
     players[p.id] = {
       name:p.name, color:p.color,
+      animal: p.animal || '🐭',
       col:spawn.c, row:spawn.r,
       px:spawn.c*CELL+CELL/2, py:spawn.r*CELL+CELL/2,
       score:0, dash:null, trail:[],
@@ -1030,7 +1058,7 @@ function getScores(){
     return Object.values(teams)
       .sort((a,b)=>b.score-a.score)
       .map(t=>({
-        name: t.members.map(p=>`${p.role==='wall'?'🧱':'🏃'}${p.name}`).join(' & '),
+        name: t.members.map(p=>`${p.animal||'🐭'}${p.name}`).join(' & '),
         score:t.score, color:t.color
       }));
   }
@@ -1053,7 +1081,7 @@ function drawGame(){
   // Floor
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(maze[r][c]===0){
-      ctx.fillStyle=(c+r)%2===0?'#13092299':'#0f071a99';
+      ctx.fillStyle=(c+r)%2===0?'#0e0b1e99':'#0b0818aa';
       ctx.fillRect(c*CELL,r*CELL,CELL,CELL);
     }
   }
@@ -1062,18 +1090,37 @@ function drawGame(){
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(maze[r][c]===1){
       const x=c*CELL,y=r*CELL;
-      // Base
-      ctx.fillStyle='#1a0f35'; ctx.fillRect(x,y,CELL,CELL);
-      // Top face (lighter)
-      ctx.fillStyle='#2d1a55'; ctx.fillRect(x,y,CELL,5);
-      // Left edge
-      ctx.fillStyle='#241444'; ctx.fillRect(x,y,4,CELL);
-      // Shine pixel on top-left corner
-      ctx.fillStyle='#4a2a88'; ctx.fillRect(x,y,2,2);
-      // Bottom shadow
-      ctx.fillStyle='#0a0515'; ctx.fillRect(x,y+CELL-3,CELL,3);
-      // Right shadow
-      ctx.fillStyle='#0d0820'; ctx.fillRect(x+CELL-3,y,3,CELL);
+
+      // In coop mode, find if any player "owns" this area by proximity - use team color for walls
+      let wallCol = '#1a1035';
+      let wallTop = '#2a1850';
+      let wallLeft = '#221440';
+      let wallShine = '#3a2266';
+      let wallBot = '#0a0820';
+      let wallRight = '#0e0c1c';
+
+      if(roomConfig.gameMode==='coop'){
+        // Find closest player and use their team/animal color
+        let minDist=Infinity, closestAnimal=null;
+        Object.values(players).forEach(p=>{
+          const dist=Math.abs(p.col-c)+Math.abs(p.row-r);
+          if(dist<minDist){ minDist=dist; closestAnimal=p.animal; }
+        });
+        if(closestAnimal && ANIMAL_TEAM_WALL_COLORS[closestAnimal] && minDist<=8){
+          const tc=ANIMAL_TEAM_WALL_COLORS[closestAnimal];
+          // Tint wall with team color (subtle)
+          wallCol=hexMix(tc,'#12082a',0.18);
+          wallTop=hexMix(tc,'#1e0e42',0.25);
+          wallShine=hexMix(tc,'#3a2280',0.35);
+        }
+      }
+
+      ctx.fillStyle=wallCol; ctx.fillRect(x,y,CELL,CELL);
+      ctx.fillStyle=wallTop; ctx.fillRect(x,y,CELL,5);
+      ctx.fillStyle=wallLeft; ctx.fillRect(x,y,4,CELL);
+      ctx.fillStyle=wallShine; ctx.fillRect(x,y,2,2);
+      ctx.fillStyle=wallBot; ctx.fillRect(x,y+CELL-3,CELL,3);
+      ctx.fillStyle=wallRight; ctx.fillRect(x+CELL-3,y,3,CELL);
     }
   }
 
@@ -1147,11 +1194,11 @@ function drawGame(){
   // Other players
   Object.entries(players).forEach(([id,p])=>{
     if(id===myId) return;
-    drawPlayer(p.px,p.py,p.color,p.name,false,p.role||'dasher',p.teamId,teamColors[p.teamId]||null);
+    drawPlayer(p.px,p.py,p.color,p.name,false,p.role||'dasher',p.teamId,teamColors[p.teamId]||null,p.animal||'🐭');
   });
 
   // My player (drawn on top)
-  if(myPlayer) drawPlayer(myPlayer.px,myPlayer.py,myPlayer.color||'#5599ff',myPlayer.name,true,myPlayer.role||'dasher',myPlayer.teamId,teamColors[myPlayer.teamId]||null);
+  if(myPlayer) drawPlayer(myPlayer.px,myPlayer.py,myPlayer.color||'#5588ff',myPlayer.name,true,myPlayer.role||'dasher',myPlayer.teamId,teamColors[myPlayer.teamId]||null,myPlayer.animal||'🐭');
 
   // Particles - glowing circles
   particles.forEach(p=>{
@@ -1190,76 +1237,82 @@ function drawGame(){
   updateScoreboard();
 }
 
-function drawPlayer(x,y,color,name,isMe=false,role='dasher',teamId=null,teamColor=null){
-  const R=CELL*.38;
+function drawPlayer(x,y,color,name,isMe=false,role='dasher',teamId=null,teamColor=null,animal='🐭'){
+  const R=CELL*.42;
 
-  // Team ring (coop mode) - orbit ring around player
-  if(roomConfig.gameMode==='coop' && teamColor){
+  // Outer glow
+  const grd=ctx.createRadialGradient(x,y,0,x,y,R*2.5);
+  grd.addColorStop(0,color+'28'); grd.addColorStop(1,'transparent');
+  ctx.fillStyle=grd;
+  ctx.beginPath(); ctx.arc(x,y,R*2.5,0,Math.PI*2); ctx.fill();
+
+  if(role==='wall'){
+    // In coop mode, wall player shows as a solid colored block with emoji
+    const wc = teamColor || color;
     ctx.save();
-    ctx.strokeStyle=teamColor;
-    ctx.lineWidth=2.5;
-    ctx.globalAlpha=0.6;
-    ctx.setLineDash([4,4]);
-    ctx.beginPath();
-    ctx.arc(x,y,R+5,0,Math.PI*2);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    // Colored square background
+    ctx.globalAlpha=0.85;
+    ctx.fillStyle=wc+'55';
+    roundRect(ctx, x-R, y-R, R*2, R*2, 6);
+    ctx.fill();
     ctx.globalAlpha=1;
+    // Border
+    ctx.strokeStyle=isMe?'#fff':wc+'aa'; ctx.lineWidth=isMe?2:1.5;
+    roundRect(ctx, x-R, y-R, R*2, R*2, 6); ctx.stroke();
+    ctx.restore();
+    // Animal emoji
+    ctx.save();
+    ctx.font=`${Math.round(R*1.55)}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(animal,x,y+1);
+    ctx.restore();
+  } else {
+    // Dasher - clean circle + emoji
+    if(isMe){
+      // White ring for "me"
+      ctx.save();
+      ctx.strokeStyle='rgba(255,255,255,0.7)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(x,y,R+2,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+    // Subtle circle bg
+    ctx.save();
+    ctx.globalAlpha=0.35;
+    ctx.fillStyle=color;
+    ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.restore();
+    // Animal emoji
+    ctx.save();
+    ctx.font=`${Math.round(R*1.65)}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(animal,x,y+1);
     ctx.restore();
   }
 
-  // Outer glow
-  const grd=ctx.createRadialGradient(x,y,0,x,y,R*3);
-  grd.addColorStop(0,color+'33'); grd.addColorStop(1,'transparent');
-  ctx.fillStyle=grd;
-  ctx.beginPath(); ctx.arc(x,y,R*3,0,Math.PI*2); ctx.fill();
-
-  if(role==='wall'){
-    // Rounded brick body
-    ctx.fillStyle=color+'cc';
-    roundRect(ctx, x-R, y-R, R*2, R*2, 5);
-    ctx.fill();
-    // Brick pattern
-    ctx.strokeStyle='#00000044'; ctx.lineWidth=1;
-    roundRect(ctx, x-R, y-R, R*2, R*2, 5);
-    ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x-R,y); ctx.lineTo(x+R,y); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x,y-R); ctx.lineTo(x,y); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x-R*.5,y); ctx.lineTo(x-R*.5,y+R); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x+R*.5,y); ctx.lineTo(x+R*.5,y+R); ctx.stroke();
-    if(isMe){
-      ctx.strokeStyle='#fff'; ctx.lineWidth=2;
-      roundRect(ctx, x-R, y-R, R*2, R*2, 5); ctx.stroke();
-    }
-    // Wall emoji
-    ctx.font=`${Math.round(R*1.1)}px serif`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('🧱',x,y);
-  } else {
-    // Player circle with inner shine
-    const bodyGrd=ctx.createRadialGradient(x-R*.25,y-R*.3,0,x,y,R);
-    bodyGrd.addColorStop(0, lightenColor(color,40));
-    bodyGrd.addColorStop(1, color);
-    ctx.fillStyle=bodyGrd;
-    ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
-    // Shine
-    ctx.fillStyle='rgba(255,255,255,0.18)';
-    ctx.beginPath(); ctx.arc(x-R*.22,y-R*.28,R*.38,0,Math.PI*2); ctx.fill();
-    if(isMe){
-      ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.stroke();
-    }
-  }
-
-  // Name tag with backdrop
-  const nm = (isMe?'▸ ':'')+name;
+  // Name tag
+  const nm = (isMe?'› ':'')+name;
   ctx.font=`${isMe?'bold ':''} 9px sans-serif`;
   const tw=ctx.measureText(nm).width;
-  ctx.fillStyle='#0b061488';
-  ctx.fillRect(x-tw/2-3, y-R-15, tw+6, 13);
-  ctx.fillStyle=isMe?'#fff':'#ccc';
+  ctx.fillStyle='#08051088';
+  ctx.fillRect(x-tw/2-3, y-R-14, tw+6, 12);
+  ctx.fillStyle=isMe?'#fff':'#b0a8d0';
   ctx.textAlign='center'; ctx.textBaseline='bottom';
   ctx.fillText(nm,x,y-R-3);
+}
+
+function hexMix(hex1, hex2, t){
+  // Mix hex1 into hex2 with factor t (0=hex2, 1=hex1)
+  const parse=h=>{
+    const n=parseInt((h||'#808080').replace('#',''),16);
+    return [(n>>16)&255,(n>>8)&255,n&255];
+  };
+  const [r1,g1,b1]=parse(hex1);
+  const [r2,g2,b2]=parse(hex2);
+  const r=Math.round(r2+(r1-r2)*t);
+  const g=Math.round(g2+(g1-g2)*t);
+  const b=Math.round(b2+(b1-b2)*t);
+  return `rgb(${r},${g},${b})`;
 }
 
 function lightenColor(hex,amt){
@@ -1317,7 +1370,7 @@ function updateScoreboard(){
     const sorted=Object.entries(teams).sort(([,a],[,b])=>b.score-a.score);
     sb.innerHTML=sorted.map(([tid,t],i)=>{
       const isMyTeam=t.members.some(({id})=>id===myId);
-      const names=t.members.map(({id,p})=>`${p.role==='wall'?'🧱':'🏃'}${p.name}`).join(' & ');
+      const names=t.members.map(({id,p})=>`${p.animal||'🐭'}${p.name}`).join(' & ');
       return `<div class="sb-row">
         <span class="sb-name ${isMyTeam?'sb-me':''}">${isMyTeam?'▶ ':''}${names}</span>
         <span class="sb-pts">${t.score}</span>
@@ -1354,11 +1407,12 @@ function updateGameHUD(){
   const roleEl=document.getElementById('hudRole');
   if(roomConfig.gameMode==='coop'){
     roleEl.style.display='flex';
+    const myAnimal = myPlayer.animal||'🐭';
     if(myPlayer.role==='wall'){
-      roleEl.innerHTML='🧱 <span style="color:#ffaa44">أنت الحيطة</span>';
+      roleEl.innerHTML=`${myAnimal} <span style="color:#ffaa44">أنت الحيطة</span>`;
       document.getElementById('hudBreak').parentElement.style.display='none';
     } else {
-      roleEl.innerHTML='🏃 <span style="color:#55ff99">أنت الداشر</span>';
+      roleEl.innerHTML=`${myAnimal} <span style="color:#66ffaa">أنت الداشر</span>`;
       document.getElementById('hudBreak').parentElement.style.display='flex';
     }
   } else {
@@ -1558,7 +1612,8 @@ function startSolo(){
   roomConfig={gameSecs:0,breakSecs:3};
 
   players={};
-  players[myId]={name:myName||'أنت',color:'#5599ff',
+  players[myId]={name:myName||'أنت',color:'#5588ff',
+    animal:'🐭',
     col:1,row:1,px:CELL+CELL/2,py:CELL+CELL/2,
     score:0,dash:null,trail:[],breakCD:0};
   myPlayer=players[myId];
