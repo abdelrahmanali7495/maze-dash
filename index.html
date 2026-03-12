@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>متاهة الكنوز - أونلاين</title>
+<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Noto+Sans+Arabic:wght@400;700&display=swap');
+
+:root {
+  --gold: #e8c87a;
+  --dark: #0b0614;
+  --purple: #1a0a2e;
+  --accent: #5599ff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  width:100%; height:100%;
+  background:var(--dark);
+  color:#fff;
+  font-family:'Noto Sans Arabic',sans-serif;
+  overflow:hidden;
+  touch-action:none;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+
+/* ── SCREENS ── */
+.screen { display:none; flex-direction:column; align-items:center; justify-content:center;
+  width:100%; height:100%; gap:14px; padding:20px; }
+.screen.active { display:flex; }
+
+h1 { font-family:'Cinzel',serif; color:var(--gold);
+  font-size:clamp(20px,5vw,36px); text-shadow:0 0 30px var(--gold);
+  letter-spacing:3px; text-align:center; }
+h2 { font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(14px,3vw,22px); }
+
+.card {
+  background:#ffffff08; border:1px solid #ffffff15;
+  border-radius:8px; padding:20px 28px;
+  display:flex; flex-direction:column; gap:12px;
+  width:min(420px,95vw);
+}
+
+label { font-size:12px; color:#aaa; display:flex; flex-direction:column; gap:5px; }
+input, select {
+  background:#ffffff0f; border:1px solid #ffffff25;
+  color:#fff; padding:10px 14px; border-radius:4px;
+  font-family:'Noto Sans Arabic',sans-serif; font-size:14px;
+  outline:none; width:100%;
+}
+input:focus, select:focus { border-color:var(--gold); }
+select option { background:#1a0a2e; }
+
+.row { display:flex; gap:10px; }
+.row label { flex:1; }
+
+.btn {
+  background:linear-gradient(135deg,var(--gold),#c8960a);
+  color:var(--dark); border:none; padding:12px 24px;
+  font-family:'Cinzel',serif; font-size:13px; font-weight:900;
+  cursor:pointer; border-radius:4px; letter-spacing:1px;
+  box-shadow:0 4px 20px #e8c87a33; transition:all 0.15s;
+  width:100%;
+}
+.btn:hover { transform:translateY(-2px); box-shadow:0 8px 30px #e8c87a55; }
+.btn:active { transform:translateY(1px); }
+.btn.secondary {
+  background:#ffffff15; color:#ccc;
+  box-shadow:none; border:1px solid #ffffff20;
+}
+.btn.secondary:hover { background:#ffffff25; }
+.btn.danger { background:linear-gradient(135deg,#ff4444,#cc0000); color:#fff; }
+
+.divider { text-align:center; color:#555; font-size:11px; position:relative; }
+.divider::before,.divider::after {
+  content:''; position:absolute; top:50%; width:42%; height:1px; background:#333;
+}
+.divider::before { left:0; } .divider::after { right:0; }
+
+/* ── LOBBY ── */
+#lobbyPlayers { width:100%; display:flex; flex-direction:column; gap:6px; }
+.player-row {
+  display:flex; justify-content:space-between; align-items:center;
+  background:#ffffff08; padding:8px 14px; border-radius:4px;
+  font-size:13px;
+}
+.player-row .crown { color:var(--gold); }
+.player-row .ready { color:#44ff88; font-size:11px; }
+
+#roomCodeDisplay {
+  font-family:'Cinzel',serif; font-size:28px; color:var(--gold);
+  letter-spacing:8px; text-align:center; text-shadow:0 0 20px var(--gold);
+}
+
+/* ── HUD ── */
+#hud {
+  width:100%; max-width:700px;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 12px; font-size:11px; font-weight:700;
+  background:#0b061499; border-bottom:1px solid #ffffff10;
+  flex-wrap:wrap; gap:4px;
+}
+#hud .hitem { display:flex; gap:5px; align-items:center; color:var(--gold); }
+#hud .hitem span { color:#fff; }
+#timerBar {
+  height:3px; background:#333; width:100%;
+}
+#timerFill { height:100%; background:var(--gold); transition:width 0.5s linear; }
+
+/* ── CANVAS WRAP ── */
+#wrap {
+  position:relative; overflow:hidden;
+  border:1px solid #3a2a5a;
+  box-shadow:0 0 60px #6633ff22;
+  flex:1; width:100%; max-width:700px;
+}
+#gc { display:block; width:100%; height:100%; }
+
+/* ── SCOREBOARD (in-game overlay) ── */
+#scoreboard {
+  position:absolute; top:8px; right:8px;
+  background:#0b0614cc; border:1px solid #3a2a5a;
+  border-radius:4px; padding:8px 12px;
+  min-width:130px; font-size:11px;
+  display:none;
+}
+#scoreboard .sb-row {
+  display:flex; justify-content:space-between; gap:12px;
+  padding:2px 0; border-bottom:1px solid #ffffff0a;
+}
+#scoreboard .sb-row:last-child { border:none; }
+#scoreboard .sb-name { color:#ccc; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#scoreboard .sb-pts { color:var(--gold); font-weight:700; }
+#scoreboard .sb-me { color:var(--accent); }
+
+/* ── MINIMAP ── */
+#minimap {
+  position:absolute; bottom:8px; right:8px;
+  border:1px solid #3a2a5a; opacity:0.8;
+}
+
+/* ── D-PAD ── */
+#dpad {
+  display:none; position:relative;
+  width:130px; height:130px; flex-shrink:0;
+}
+.db {
+  position:absolute; width:42px; height:42px;
+  background:#ffffff0f; border:1.5px solid #ffffff22;
+  color:var(--gold); font-size:16px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:8px; cursor:pointer;
+  user-select:none; -webkit-tap-highlight-color:transparent;
+}
+.db.on { background:#e8c87a33; }
+#db-u{top:0;left:44px} #db-d{bottom:0;left:44px}
+#db-l{top:44px;left:0} #db-r{top:44px;right:0}
+
+/* ── BREAK INDICATOR ── */
+#brkInd {
+  position:absolute; bottom:8px; left:8px;
+  background:#0b0614cc; border:1px solid #3a2a5a;
+  border-radius:4px; padding:5px 10px;
+  font-size:10px; color:#ff8844;
+  display:none;
+}
+
+/* ── END SCREEN ── */
+#endPodium { width:100%; display:flex; flex-direction:column; gap:8px; }
+.podium-row {
+  display:flex; align-items:center; gap:12px;
+  padding:10px 16px; border-radius:6px;
+  background:#ffffff08; font-size:14px;
+}
+.podium-row.first { background:#e8c87a22; border:1px solid var(--gold); }
+.podium-row .rank { font-size:20px; width:30px; text-align:center; }
+.podium-row .pname { flex:1; font-weight:700; }
+.podium-row .ppts { color:var(--gold); font-weight:700; font-size:16px; }
+
+/* ── TOAST ── */
+#toast {
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  background:#1a0a2e; border:1px solid #3a2a5a;
+  color:#fff; padding:10px 20px; border-radius:20px;
+  font-size:12px; opacity:0; transition:opacity 0.3s;
+  pointer-events:none; z-index:100; white-space:nowrap;
+}
+#toast.show { opacity:1; }
+
+@media (pointer:coarse) { #dpad { display:block; } }
+@media (max-width:500px) { #hud { font-size:10px; } }
+</style>
+</head>
+<body>
+
+<!-- ══ SCREEN: MENU ══ -->
+<div id="s-menu" class="screen active">
+  <h1>⚔ متاهة الكنوز ⚔</h1>
+  <div class="card">
+    <label>اسمك في اللعبة
+      <input id="nameInput" placeholder="أدخل اسمك..." maxlength="16" value="">
+    </label>
+    <button class="btn" id="btnCreate">🏠 إنشاء غرفة جديدة</button>
+    <div class="divider">أو</div>
+    <div class="row">
+      <label>كود الغرفة
+        <input id="joinCode" placeholder="XXXX" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;text-align:center">
+      </label>
+    </div>
+    <button class="btn secondary" id="btnJoin">🚪 انضم لغرفة</button>
+    <div class="divider">أو</div>
+    <button class="btn secondary" id="btnSolo">🎮 لعب منفرد</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: CREATE ROOM ══ -->
+<div id="s-create" class="screen">
+  <h2>⚙ إعدادات الغرفة</h2>
+  <div class="card">
+    <div class="row">
+      <label>حجم المتاهة
+        <select id="cfgSize">
+          <option value="sm">صغيرة (11×11)</option>
+          <option value="md">متوسطة (17×17)</option>
+          <option value="lg" selected>كبيرة (25×25)</option>
+          <option value="xl">ضخمة (31×31)</option>
+          <option value="xxl">عملاقة (41×41)</option>
+        </select>
+      </label>
+      <label>أقصى لاعبين
+        <select id="cfgMaxPlayers">
+          <option value="2">2</option>
+          <option value="4" selected>4</option>
+          <option value="6">6</option>
+          <option value="8">8</option>
+          <option value="10">10</option>
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <label>وقت المباراة (ثانية)
+        <select id="cfgTime">
+          <option value="60">60 ث</option>
+          <option value="120" selected>120 ث</option>
+          <option value="180">180 ث</option>
+          <option value="300">300 ث</option>
+          <option value="0">بدون وقت</option>
+        </select>
+      </label>
+      <label>سكور الفوز
+        <select id="cfgWinScore">
+          <option value="0">بدون حد</option>
+          <option value="300">300</option>
+          <option value="500" selected>500</option>
+          <option value="1000">1000</option>
+          <option value="2000">2000</option>
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <label>الاختراق كل (ثانية)
+        <select id="cfgBreak">
+          <option value="3" selected>3 ث</option>
+          <option value="5">5 ث</option>
+          <option value="10">10 ث</option>
+          <option value="0">حر (بدون cooldown)</option>
+        </select>
+      </label>
+      <label>countdown قبل البدء
+        <select id="cfgCountdown">
+          <option value="3" selected>3 ث</option>
+          <option value="5">5 ث</option>
+          <option value="10">10 ث</option>
+        </select>
+      </label>
+    </div>
+    <button class="btn" id="btnConfirmCreate">✅ إنشاء الغرفة</button>
+    <button class="btn secondary" id="btnBackCreate">↩ رجوع</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: LOBBY ══ -->
+<div id="s-lobby" class="screen">
+  <h2>🏠 الغرفة</h2>
+  <div class="card" style="align-items:center;">
+    <div style="font-size:12px;color:#888;">شارك الكود مع أصحابك</div>
+    <div id="roomCodeDisplay">----</div>
+    <div id="lobbyPlayers"></div>
+    <div id="lobbySettings" style="font-size:11px;color:#888;text-align:center;line-height:1.8;"></div>
+    <button class="btn" id="btnStartGame" style="display:none">▶ ابدأ اللعبة</button>
+    <div id="waitingMsg" style="color:#888;font-size:12px;">في انتظار صاحب الغرفة...</div>
+    <button class="btn secondary" id="btnLeaveLobby">↩ مغادرة</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: COUNTDOWN ══ -->
+<div id="s-countdown" class="screen">
+  <div style="font-size:80px;font-family:Cinzel;color:var(--gold);text-shadow:0 0 40px var(--gold)" id="cdNum">3</div>
+  <div style="color:#aaa;font-size:14px;">استعد...</div>
+</div>
+
+<!-- ══ SCREEN: GAME ══ -->
+<div id="s-game" class="screen" style="padding:0;gap:0;">
+  <div id="hud">
+    <div class="hitem">⏱ <span id="hudTime">--</span></div>
+    <div class="hitem">💎 <span id="hudCollected">0/0</span></div>
+    <div class="hitem">🏆 <span id="hudScore">0</span></div>
+    <div class="hitem">💥 <span id="hudBreak" style="color:#ff8844">جاهز</span></div>
+  </div>
+  <div id="timerBar"><div id="timerFill"></div></div>
+  <div id="wrap">
+    <canvas id="gc"></canvas>
+    <div id="scoreboard"></div>
+    <canvas id="minimap" width="80" height="80"></canvas>
+    <div id="brkInd">💥 اختراق جاهز!</div>
+  </div>
+  <div id="dpad">
+    <div class="db" id="db-u">▲</div>
+    <div class="db" id="db-d">▼</div>
+    <div class="db" id="db-l">◀</div>
+    <div class="db" id="db-r">▶</div>
+  </div>
+</div>
+
+<!-- ══ SCREEN: END ══ -->
+<div id="s-end" class="screen">
+  <h1 id="endTitle">🏆 انتهت اللعبة</h1>
+  <div class="card">
+    <div id="endPodium"></div>
+    <button class="btn" id="btnPlayAgain" style="display:none">🔄 لعبة جديدة (نفس الغرفة)</button>
+    <button class="btn secondary" id="btnBackMenu">🏠 القائمة الرئيسية</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  CONSTANTS & CONFIG
+// ══════════════════════════════════════════════════
+const ABLY_KEY = 'UcDcBw.YJJl6g:LDwkET05nlae7VeirAz44uL8hE16cLZ8MyrSFwCnolk';
+const CELL = 32;
+const SIZE_MAP = { sm:[11,11], md:[17,17], lg:[25,25], xl:[31,31], xxl:[41,41] };
+const PLAYER_COLORS = ['#5599ff','#ff5577','#55ff99','#ffaa33','#cc55ff','#55ccff','#ff8833','#88ff44'];
+
+const TREASURE_DEF = [
+  {sym:'💎', val:50,  glow:'#44ddff'},
+  {sym:'💰', val:30,  glow:'#ffaa22'},
+  {sym:'👑', val:100, glow:'#ffdd00'},
+  {sym:'❤️', val:75,  glow:'#ff3355'},
+  {sym:'🔮', val:60,  glow:'#cc44ff'},
+  {sym:'⭐', val:40,  glow:'#ffff44'},
+  {sym:'🍀', val:35,  glow:'#44ff88'},
+  {sym:'🔑', val:80,  glow:'#ffcc44'},
+];
+
+// ══════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════
+let ably, channel;
+let myId = Math.random().toString(36).slice(2,10);
+let myName = '';
+let isHost = false;
+let roomCode = '';
+let roomConfig = {};
+
+// Game state
+let maze = [], COLS = 25, ROWS = 25;
+let MW, MH;
+let treasures = [];  // {c,r,sym,val,glow,got}
+let players = {};    // id -> {name,col,row,px,py,score,color,dash,trail,breakCD}
+let myPlayer = null;
+let particles = [], floats = [];
+let gameRunning = false;
+let gameTimer = 0;   // seconds remaining
+let timerInterval = null;
+let winScore = 0;
+let breakCooldownFrames = 0;
+let BREAK_COOLDOWN_FRAMES = 180;
+let raf;
+let pendingDash = null;
+let localDash = null; // my local dash animation
+let totalTreasures = 0;
+
+// Canvas
+let gc, ctx, VW, VH;
+
+// Touch
+let touchStartX = 0, touchStartY = 0;
+
+// ══════════════════════════════════════════════════
+//  SCREEN MANAGER
+// ══════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+}
+
+function toast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ══════════════════════════════════════════════════
+//  ABLY SETUP
+// ══════════════════════════════════════════════════
+async function connectAbly() {
+  if (ably) return;
+  ably = new Ably.Realtime({ key: ABLY_KEY, clientId: myId });
+  await new Promise(r => ably.connection.once('connected', r));
+}
+
+function joinChannel(code) {
+  if (channel) channel.detach();
+  channel = ably.channels.get('maze-room-' + code);
+  channel.subscribe(handleMessage);
+  channel.presence.enter({ name: myName, isHost });
+  channel.presence.subscribe(handlePresence);
+}
+
+function pub(type, data = {}) {
+  if (!channel) return;
+  channel.publish(type, { from: myId, name: myName, ...data });
+}
+
+function handlePresence(msg) {
+  if (msg.action === 'enter' || msg.action === 'update') {
+    // Update lobby
+    refreshLobby();
+  }
+  if (msg.action === 'leave') {
+    if (players[msg.clientId]) {
+      toast(`${players[msg.clientId].name} غادر اللعبة`);
+      delete players[msg.clientId];
+    }
+    refreshLobby();
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  MESSAGE HANDLERS
+// ══════════════════════════════════════════════════
+function handleMessage(msg) {
+  const d = msg.data;
+  switch (msg.name) {
+    case 'game-start':    onGameStart(d); break;
+    case 'countdown':     onCountdown(d); break;
+    case 'player-move':   onPlayerMove(d); break;
+    case 'treasure-took': onTreasureTook(d); break;
+    case 'game-end':      onGameEnd(d); break;
+    case 'play-again':    onPlayAgain(d); break;
+    case 'player-score':  onPlayerScore(d); break;
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  LOBBY
+// ══════════════════════════════════════════════════
+async function refreshLobby() {
+  if (!channel) return;
+  try {
+    const members = await channel.presence.get();
+    const lp = document.getElementById('lobbyPlayers');
+    lp.innerHTML = members.map(m => `
+      <div class="player-row">
+        <span>${m.data?.isHost ? '<span class="crown">👑</span>' : '👤'} ${m.data?.name || m.clientId}</span>
+        ${m.clientId === myId ? '<span class="ready">أنت</span>' : ''}
+      </div>
+    `).join('');
+
+    // Show start button only for host
+    const startBtn = document.getElementById('btnStartGame');
+    const waitMsg = document.getElementById('waitingMsg');
+    if (isHost) {
+      startBtn.style.display = members.length >= 1 ? 'block' : 'none';
+      waitMsg.style.display = 'none';
+    } else {
+      startBtn.style.display = 'none';
+      waitMsg.style.display = 'block';
+    }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════
+//  ROOM CODE GENERATOR
+// ══════════════════════════════════════════════════
+function genCode() {
+  return Math.random().toString(36).slice(2,6).toUpperCase();
+}
+
+// ══════════════════════════════════════════════════
+//  MAZE GENERATION
+// ══════════════════════════════════════════════════
+function genMaze(cols, rows) {
+  const m = Array.from({length:rows}, () => new Uint8Array(cols).fill(1));
+  const visited = Array.from({length:rows}, () => new Uint8Array(cols));
+
+  function carve(c,r) {
+    visited[r][c]=1; m[r][c]=0;
+    const dirs=[[0,-2],[0,2],[-2,0],[2,0]].sort(()=>Math.random()-.5);
+    for(const[dc,dr] of dirs){
+      const nc=c+dc, nr=r+dr;
+      if(nc>0&&nc<cols-1&&nr>0&&nr<rows-1&&!visited[nr][nc]){
+        m[r+dr/2][c+dc/2]=0; carve(nc,nr);
+      }
+    }
+  }
+  carve(1,1);
+
+  // Anti-trap: ensure every floor cell has ≥2 open neighbors
+  for(let pass=0;pass<3;pass++){
+    for(let r=1;r<rows-1;r++){
+      for(let c=1;c<cols-1;c++){
+        if(m[r][c]===0){
+          const adj=[[0,-1],[0,1],[-1,0],[1,0]];
+          const open=adj.filter(([dc,dr])=>m[r+dr]?.[c+dc]===0);
+          if(open.length<=1){
+            const walls=adj.filter(([dc,dr])=>r+dr>=1&&r+dr<rows-1&&c+dc>=1&&c+dc<cols-1&&m[r+dr][c+dc]===1);
+            if(walls.length){
+              const[dc,dr]=walls[Math.floor(Math.random()*walls.length)];
+              m[r+dr][c+dc]=0;
+            }
+          }
+        }
+      }
+    }
+  }
+  // Extra loops
+  for(let i=0;i<Math.floor(cols*rows/10);i++){
+    const r=1+Math.floor(Math.random()*(rows-2));
+    const c=1+Math.floor(Math.random()*(cols-2));
+    const side=Math.floor(Math.random()*4);
+    const dr=[0,0,1,-1][side], dc=[1,-1,0,0][side];
+    if(r+dr>=1&&r+dr<rows-1&&c+dc>=1&&c+dc<cols-1) m[r+dr][c+dc]=0;
+  }
+  return m;
+}
+
+function placeTreasures(mazeData, cols, rows) {
+  const floor=[];
+  for(let r=0;r<rows;r++)
+    for(let c=0;c<cols;c++)
+      if(mazeData[r][c]===0) floor.push({c,r});
+  floor.sort(()=>Math.random()-.5);
+  const n=Math.floor(floor.length*.3);
+  return floor.slice(0,n).map(({c,r})=>{
+    const def=TREASURE_DEF[Math.floor(Math.random()*TREASURE_DEF.length)];
+    return {c,r,...def,got:false,t:Math.random()*Math.PI*2};
+  });
+}
+
+// Serialize maze to string for network
+function mazeToStr(m,cols,rows){ return cols+','+rows+','+Array.from(m,(r)=>Array.from(r).join('')).join('|'); }
+function strToMaze(s){
+  const parts=s.split(',');
+  const cols=+parts[0], rows=+parts[1];
+  const rows_data=parts[2].split('|');
+  return {maze:rows_data.map(r=>new Uint8Array(r.split('').map(Number))), cols, rows};
+}
+function treasuresToStr(ts){ return ts.map(t=>`${t.c},${t.r},${t.sym},${t.val},${t.glow}`).join(';'); }
+function strToTreasures(s){
+  if(!s) return [];
+  return s.split(';').map(p=>{
+    const[c,r,sym,val,glow]=p.split(',');
+    return {c:+c,r:+r,sym,val:+val,glow,got:false,t:Math.random()*Math.PI*2};
+  });
+}
+
+// ══════════════════════════════════════════════════
+//  GAME START
+// ══════════════════════════════════════════════════
+async function hostStartGame() {
+  const [cols,rows] = SIZE_MAP[roomConfig.size];
+  const mazeData = genMaze(cols,rows);
+  const trs = placeTreasures(mazeData, cols, rows);
+
+  // Assign spawn points - spread players around the maze
+  const members = await channel.presence.get();
+  const spawnPoints = getSpawnPoints(mazeData, cols, rows, members.length);
+  const playerSpawns = {};
+  members.forEach((m,i)=>{
+    playerSpawns[m.clientId] = spawnPoints[i] || {c:1,r:1};
+  });
+
+  pub('game-start', {
+    maze: mazeToStr(mazeData,cols,rows),
+    treasures: treasuresToStr(trs),
+    config: roomConfig,
+    spawns: playerSpawns,
+    playerList: members.map((m,i)=>({
+      id:m.clientId, name:m.data?.name||m.clientId, color:PLAYER_COLORS[i%PLAYER_COLORS.length]
+    }))
+  });
+}
+
+function getSpawnPoints(mazeData, cols, rows, n) {
+  // Pick spread-out floor cells for spawns
+  const candidates=[];
+  for(let r=1;r<rows-1;r++)
+    for(let c=1;c<cols-1;c++)
+      if(mazeData[r][c]===0) candidates.push({c,r});
+  candidates.sort(()=>Math.random()-.5);
+  // Try to spread: take corners first
+  const corners=[
+    {c:1,r:1},{c:cols-2,r:1},{c:1,r:rows-2},{c:cols-2,r:rows-2}
+  ].filter(pt=>mazeData[pt.r][pt.c]===0);
+  const result=[...corners];
+  for(const p of candidates){
+    if(result.length>=n) break;
+    if(!result.some(r=>Math.abs(r.c-p.c)+Math.abs(r.r-p.r)<Math.floor((cols+rows)/6)))
+      result.push(p);
+  }
+  while(result.length<n) result.push(candidates[result.length]||{c:1,r:1});
+  return result;
+}
+
+function onCountdown(d) {
+  showScreen('countdown');
+  let n = d.from_host_n || roomConfig.countdown || 3;
+  const el = document.getElementById('cdNum');
+  el.textContent = n;
+  const iv = setInterval(()=>{
+    n--;
+    if(n<=0){ clearInterval(iv); }
+    else el.textContent = n;
+  },1000);
+}
+
+function onGameStart(d) {
+  // Parse maze
+  const parsed = strToMaze(d.maze);
+  maze = parsed.maze; COLS = parsed.cols; ROWS = parsed.rows;
+  MW = COLS * CELL; MH = ROWS * CELL;
+
+  treasures = strToTreasures(d.treasures);
+  totalTreasures = treasures.length;
+  roomConfig = d.config;
+  BREAK_COOLDOWN_FRAMES = (roomConfig.breakSecs||3)*60;
+  winScore = +roomConfig.winScore||0;
+
+  // Init players
+  players = {};
+  d.playerList.forEach(p => {
+    const spawn = d.spawns[p.id] || {c:1,r:1};
+    players[p.id] = {
+      name:p.name, color:p.color,
+      col:spawn.c, row:spawn.r,
+      px:spawn.c*CELL+CELL/2, py:spawn.r*CELL+CELL/2,
+      score:0, dash:null, trail:[],
+      breakCD:0
+    };
+  });
+  myPlayer = players[myId];
+
+  // Canvas setup
+  setupCanvas();
+
+  particles=[]; floats=[];
+  pendingDash=null; localDash=null;
+  gameRunning=false;
+
+  // Start countdown then game
+  let n = +roomConfig.countdown || 3;
+  showScreen('countdown');
+  document.getElementById('cdNum').textContent = n;
+  const iv = setInterval(()=>{
+    n--;
+    if(n<=0){
+      clearInterval(iv);
+      startActualGame();
+    } else {
+      document.getElementById('cdNum').textContent = n;
+    }
+  },1000);
+}
+
+function startActualGame() {
+  gameRunning = true;
+  showScreen('game');
+  document.getElementById('scoreboard').style.display='block';
+  document.getElementById('brkInd').style.display='block';
+
+  // Timer
+  gameTimer = +roomConfig.gameSecs || 0;
+  updateTimerUI();
+  if(gameTimer>0){
+    timerInterval = setInterval(()=>{
+      gameTimer--;
+      updateTimerUI();
+      if(gameTimer<=0){
+        clearInterval(timerInterval);
+        if(isHost) pub('game-end',{ reason:'time', scores: getScores() });
+      }
+    },1000);
+  }
+
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(gameLoop);
+}
+
+function updateTimerUI(){
+  const el=document.getElementById('hudTime');
+  const fill=document.getElementById('timerFill');
+  if(+roomConfig.gameSecs>0){
+    el.textContent=gameTimer+'s';
+    fill.style.width=(gameTimer/+roomConfig.gameSecs*100)+'%';
+    fill.style.background=gameTimer<15?'#ff4444':gameTimer<30?'#ffaa22':'var(--gold)';
+  } else {
+    el.textContent='∞';
+    fill.style.width='100%';
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  CANVAS
+// ══════════════════════════════════════════════════
+function setupCanvas() {
+  gc = document.getElementById('gc');
+  ctx = gc.getContext('2d');
+  const wrap = document.getElementById('wrap');
+  const ww = Math.min(window.innerWidth, 700);
+  const wh = window.innerHeight - 80;
+  wrap.style.width  = ww + 'px';
+  wrap.style.height = wh + 'px';
+  gc.width  = ww;
+  gc.height = wh;
+  VW = ww; VH = wh;
+}
+
+// ══════════════════════════════════════════════════
+//  GAME LOOP
+// ══════════════════════════════════════════════════
+function gameLoop() {
+  if(!gameRunning){ return; }
+  updateLocal();
+  drawGame();
+  raf = requestAnimationFrame(gameLoop);
+}
+
+function updateLocal() {
+  if(!myPlayer) return;
+
+  // Break cooldown
+  if(myPlayer.breakCD>0) myPlayer.breakCD--;
+
+  // Local dash animation
+  if(localDash){
+    localDash.t++;
+    const p=Math.min(localDash.t/localDash.dur,1);
+    const e=1-Math.pow(1-p,3);
+    myPlayer.px=localDash.fromPx+(localDash.toPx-localDash.fromPx)*e;
+    myPlayer.py=localDash.fromPy+(localDash.toPy-localDash.fromPy)*e;
+
+    // Collect along path
+    const passed=Math.ceil(p*localDash.path.length);
+    for(let i=0;i<passed;i++){
+      const cell=localDash.path[i];
+      if(!cell.checked){
+        cell.checked=true;
+        tryCollect(cell.c,cell.r);
+      }
+    }
+
+    // Trail fade
+    const tp=localDash.t/localDash.dur;
+    localDash.trail.forEach((t,i)=>{ t.life=Math.max(0,1-(tp-i/localDash.trail.length)*2.5); });
+
+    if(localDash.t>=localDash.dur){
+      myPlayer.px=localDash.toPx; myPlayer.py=localDash.toPy;
+      // Collect remaining
+      localDash.path.forEach(cell=>{ if(!cell.checked){ cell.checked=true; tryCollect(cell.c,cell.r); }});
+      localDash=null;
+      // Broadcast position
+      pubMove();
+      if(pendingDash){ doLocalDash(pendingDash); pendingDash=null; }
+    }
+  }
+
+  // Treasures bob
+  treasures.forEach(t=>t.t+=0.04);
+
+  // Particles
+  particles=particles.filter(p=>{
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.life-=p.decay; return p.life>0;
+  });
+  floats=floats.filter(f=>{ f.y-=0.6; f.life-=0.02; return f.life>0; });
+
+  // HUD
+  updateGameHUD();
+}
+
+function pubMove() {
+  if(!myPlayer) return;
+  pub('player-move',{ col:myPlayer.col, row:myPlayer.row, px:myPlayer.px, py:myPlayer.py });
+}
+
+function onPlayerMove(d) {
+  if(d.from===myId) return;
+  if(!players[d.from]) return;
+  const p=players[d.from];
+  // Animate other player smoothly
+  const fromPx=p.px, fromPy=p.py;
+  const toPx=d.col*CELL+CELL/2, toPy=d.row*CELL+CELL/2;
+  p.col=d.col; p.row=d.row;
+  p.dash={ fromPx, fromPy, toPx, toPy, t:0, dur:12 };
+}
+
+function onPlayerScore(d) {
+  if(players[d.from]) players[d.from].score=d.score;
+}
+
+function onTreasureTook(d) {
+  const t=treasures.find(t=>t.c===d.c&&t.r===d.r&&!t.got);
+  if(t) t.got=true;
+}
+
+// ══════════════════════════════════════════════════
+//  INPUT / DASH
+// ══════════════════════════════════════════════════
+const held={};
+document.addEventListener('keydown',e=>{
+  if(held[e.key]) return; held[e.key]=true;
+  const dir=keyToDir(e.key);
+  if(dir) tryInput(dir);
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+});
+document.addEventListener('keyup',e=>{ held[e.key]=false; });
+
+function keyToDir(k){
+  if(k==='ArrowUp'   ||k==='w'||k==='W') return [0,-1];
+  if(k==='ArrowDown' ||k==='s'||k==='S') return [0,1];
+  if(k==='ArrowLeft' ||k==='a'||k==='A') return [-1,0];
+  if(k==='ArrowRight'||k==='d'||k==='D') return [1,0];
+  return null;
+}
+
+function tryInput(dir){
+  if(!gameRunning||!myPlayer) return;
+  if(localDash){ pendingDash=dir; return; }
+  doLocalDash(dir);
+}
+
+function doLocalDash(dir){
+  const[dc,dr]=dir;
+  let c=myPlayer.col, r=myPlayer.row;
+
+  // Check wall immediately ahead
+  const wc=c+dc, wr=r+dr;
+  if(wc>=0&&wc<COLS&&wr>=0&&wr<ROWS&&maze[wr][wc]===1){
+    if(myPlayer.breakCD<=0){
+      // Break!
+      const bc=wc+dc, br=wr+dr;
+      if(bc>=1&&bc<COLS-1&&br>=1&&br<ROWS-1){
+        maze[wr][wc]=0;
+        myPlayer.breakCD=BREAK_COOLDOWN_FRAMES;
+        spawnBurst(wc*CELL+CELL/2,wr*CELL+CELL/2,'#e8c87a',15);
+        floats.push({x:wc*CELL+CELL/2,y:wr*CELL+CELL/2-20,text:'💥',col:'#ff8844',life:1.5});
+        // Continue dash after break
+      } else return;
+    } else {
+      // Flash
+      spawnBurst(wc*CELL+CELL/2,wr*CELL+CELL/2,'#ff4444',5);
+      return;
+    }
+  }
+
+  // Slide to wall
+  while(true){
+    const nc=c+dc, nr=r+dr;
+    if(nc<0||nc>=COLS||nr<0||nr>=ROWS||maze[nr][nc]===1) break;
+    c=nc; r=nr;
+  }
+  if(c===myPlayer.col&&r===myPlayer.row){ pendingDash=null; return; }
+
+  // Build path
+  const path=[];
+  let tc=myPlayer.col,tr=myPlayer.row;
+  while(tc!==c||tr!==r){
+    tc+=dc; tr+=dr;
+    path.push({c:tc,r:tr,checked:false});
+  }
+
+  const fromPx=myPlayer.px, fromPy=myPlayer.py;
+  const toPx=c*CELL+CELL/2, toPy=r*CELL+CELL/2;
+  const dist=Math.abs(c-myPlayer.col)+Math.abs(r-myPlayer.row);
+  const dur=Math.max(6,Math.min(dist*1.8,20));
+
+  myPlayer.col=c; myPlayer.row=r;
+  localDash={fromPx,fromPy,toPx,toPy,t:0,dur,path,trail:[...path.map(p=>({...p,life:1}))]};
+}
+
+function tryCollect(c,r){
+  const t=treasures.find(t=>t.c===c&&t.r===r&&!t.got);
+  if(!t) return;
+  t.got=true;
+  myPlayer.score+=t.val;
+  spawnBurst(myPlayer.px,myPlayer.py,t.glow,12);
+  floats.push({x:myPlayer.px,y:myPlayer.py-20,text:'+'+t.val,col:t.glow,life:1});
+  // Broadcast
+  pub('treasure-took',{c,r});
+  pub('player-score',{score:myPlayer.score});
+  // Check win
+  if(winScore>0&&myPlayer.score>=winScore&&isHost){
+    clearInterval(timerInterval);
+    pub('game-end',{reason:'score',winner:myId,scores:getScores()});
+  }
+}
+
+function getScores(){
+  return Object.entries(players).map(([id,p])=>({id,name:p.name,score:p.score,color:p.color}))
+    .sort((a,b)=>b.score-a.score);
+}
+
+// ══════════════════════════════════════════════════
+//  DRAW
+// ══════════════════════════════════════════════════
+function drawGame(){
+  if(!ctx||!myPlayer) return;
+  ctx.clearRect(0,0,VW,VH);
+
+  const offX=Math.max(0,Math.min(myPlayer.px-VW/2,MW-VW));
+  const offY=Math.max(0,Math.min(myPlayer.py-VH/2,MH-VH));
+  ctx.save();
+  ctx.translate(-offX,-offY);
+
+  // Floor
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    if(maze[r][c]===0){
+      ctx.fillStyle=(c+r)%2===0?'#120c20':'#100a1c';
+      ctx.fillRect(c*CELL,r*CELL,CELL,CELL);
+    }
+  }
+
+  // Walls
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    if(maze[r][c]===1){
+      const x=c*CELL,y=r*CELL;
+      ctx.fillStyle='#1e1438'; ctx.fillRect(x,y,CELL,CELL);
+      ctx.fillStyle='#2e2050'; ctx.fillRect(x,y,CELL,4);
+      ctx.fillStyle='#2a1c4a'; ctx.fillRect(x,y,4,CELL);
+      ctx.fillStyle='#0d0818'; ctx.fillRect(x,y+CELL-3,CELL,3);
+    }
+  }
+
+  // Trails (local player)
+  if(localDash){
+    localDash.trail.forEach(t=>{
+      if(t.life<=0) return;
+      const tx=t.c*CELL+CELL/2, ty=t.r*CELL+CELL/2;
+      ctx.globalAlpha=t.life*0.5;
+      const g=ctx.createRadialGradient(tx,ty,0,tx,ty,CELL*.45);
+      g.addColorStop(0,myPlayer.color||'#5599ff'); g.addColorStop(1,'transparent');
+      ctx.fillStyle=g;
+      ctx.beginPath(); ctx.arc(tx,ty,CELL*.45,0,Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha=1;
+  }
+
+  // Other players' dash trails
+  Object.entries(players).forEach(([id,p])=>{
+    if(id===myId) return;
+    if(p.dash){
+      p.dash.t++;
+      const pp=Math.min(p.dash.t/p.dash.dur,1);
+      const e=1-Math.pow(1-pp,3);
+      p.px=p.dash.fromPx+(p.dash.toPx-p.dash.fromPx)*e;
+      p.py=p.dash.fromPy+(p.dash.toPy-p.dash.fromPy)*e;
+      if(p.dash.t>=p.dash.dur){ p.px=p.dash.toPx; p.py=p.dash.toPy; p.dash=null; }
+    }
+  });
+
+  // Treasures
+  treasures.forEach(t=>{
+    if(t.got) return;
+    const tx=t.c*CELL+CELL/2;
+    const ty=t.r*CELL+CELL/2+Math.sin(t.t)*2.5;
+    const pulse=0.88+Math.sin(t.t*.9)*.12;
+    // Glow
+    ctx.save();
+    const g=ctx.createRadialGradient(tx,ty,0,tx,ty,CELL*.6);
+    g.addColorStop(0,t.glow+'55'); g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;
+    ctx.globalAlpha=0.5+Math.sin(t.t)*.15;
+    ctx.beginPath(); ctx.arc(tx,ty,CELL*.6,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1; ctx.restore();
+    // Emoji
+    ctx.save();
+    ctx.font=`${Math.round(CELL*.7*pulse)}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor=t.glow; ctx.shadowBlur=10;
+    ctx.fillText(t.sym,tx,ty);
+    ctx.shadowBlur=0; ctx.restore();
+    // Value
+    ctx.fillStyle='#ffffff88';
+    ctx.font=`bold ${Math.round(CELL*.2)}px sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(t.val,tx,ty+CELL*.35);
+  });
+
+  // Other players
+  Object.entries(players).forEach(([id,p])=>{
+    if(id===myId) return;
+    drawPlayer(p.px,p.py,p.color,p.name);
+  });
+
+  // My player (drawn on top)
+  if(myPlayer) drawPlayer(myPlayer.px,myPlayer.py,myPlayer.color||'#5599ff',myPlayer.name,true);
+
+  // Particles
+  particles.forEach(p=>{
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle=p.col;
+    ctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size);
+  });
+  ctx.globalAlpha=1;
+
+  // Floats
+  floats.forEach(f=>{
+    ctx.globalAlpha=f.life;
+    ctx.fillStyle=f.col;
+    ctx.font='bold 13px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.strokeStyle='#00000099'; ctx.lineWidth=3;
+    ctx.strokeText(f.text,f.x,f.y);
+    ctx.fillText(f.text,f.x,f.y);
+  });
+  ctx.globalAlpha=1;
+
+  ctx.restore();
+
+  // Minimap
+  drawMinimap(offX,offY);
+  updateScoreboard();
+}
+
+function drawPlayer(x,y,color,name,isMe=false){
+  const R=CELL*.4;
+  // Glow
+  const grd=ctx.createRadialGradient(x,y,0,x,y,R*2.5);
+  grd.addColorStop(0,color+'44'); grd.addColorStop(1,'transparent');
+  ctx.fillStyle=grd;
+  ctx.beginPath(); ctx.arc(x,y,R*2.5,0,Math.PI*2); ctx.fill();
+  // Body
+  ctx.fillStyle=color;
+  ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
+  // Outline for my player
+  if(isMe){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); }
+  // Name tag
+  ctx.fillStyle=isMe?'#fff':'#ccc';
+  ctx.font=`${isMe?'bold ':''} 9px sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.fillText(name,x,y-R-2);
+}
+
+function drawMinimap(offX,offY){
+  const mm=document.getElementById('minimap');
+  const mc=mm.getContext('2d');
+  const mw=80,mh=80;
+  const cw=mw/COLS, ch=mh/ROWS;
+  mc.clearRect(0,0,mw,mh);
+  mc.fillStyle='#0b0614cc'; mc.fillRect(0,0,mw,mh);
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    if(maze[r][c]===1){ mc.fillStyle='#2e2050'; mc.fillRect(c*cw,r*ch,cw,ch); }
+  }
+  treasures.forEach(t=>{
+    if(t.got) return;
+    mc.fillStyle=t.glow;
+    mc.fillRect(t.c*cw+cw*.2,t.r*ch+ch*.2,cw*.6,ch*.6);
+  });
+  // Players
+  Object.entries(players).forEach(([id,p])=>{
+    mc.fillStyle=p.color||'#5599ff';
+    mc.beginPath();
+    mc.arc(p.col*cw+cw/2,p.row*ch+ch/2,Math.max(cw,ch)*.9,0,Math.PI*2);
+    mc.fill();
+  });
+}
+
+function updateScoreboard(){
+  const sb=document.getElementById('scoreboard');
+  const sorted=Object.entries(players).sort(([,a],[,b])=>b.score-a.score);
+  sb.innerHTML=sorted.map(([id,p])=>`
+    <div class="sb-row">
+      <span class="sb-name ${id===myId?'sb-me':''}">${id===myId?'▶ ':''} ${p.name}</span>
+      <span class="sb-pts">${p.score}</span>
+    </div>
+  `).join('');
+}
+
+function updateGameHUD(){
+  if(!myPlayer) return;
+  document.getElementById('hudScore').textContent=myPlayer.score;
+  const got=treasures.filter(t=>t.got).length;
+  document.getElementById('hudCollected').textContent=got+'/'+totalTreasures;
+  const brkEl=document.getElementById('hudBreak');
+  const brkInd=document.getElementById('brkInd');
+  if(myPlayer.breakCD<=0){
+    brkEl.textContent='جاهز'; brkEl.style.color='#ff8844';
+    brkInd.textContent='💥 اختراق جاهز!'; brkInd.style.color='#ff8844';
+  } else {
+    const secs=Math.ceil(myPlayer.breakCD/60);
+    brkEl.textContent=secs+'s'; brkEl.style.color='#666688';
+    brkInd.textContent=`⏳ ${secs}s`; brkInd.style.color='#666688';
+  }
+}
+
+function spawnBurst(x,y,col,n){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, s=1.5+Math.random()*3;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1.5,
+      life:1,decay:0.035+Math.random()*.03,size:2+Math.random()*3,col});
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  GAME END
+// ══════════════════════════════════════════════════
+function onGameEnd(d){
+  gameRunning=false;
+  clearInterval(timerInterval);
+  cancelAnimationFrame(raf);
+  showScreen('end');
+
+  const scores=d.scores||getScores();
+  const medals=['🥇','🥈','🥉'];
+  document.getElementById('endTitle').textContent =
+    d.reason==='score' ? '🏆 وصل أحد اللاعبين للهدف!' : '⏰ انتهى الوقت!';
+
+  document.getElementById('endPodium').innerHTML=scores.slice(0,6).map((p,i)=>`
+    <div class="podium-row ${i===0?'first':''}">
+      <span class="rank">${medals[i]||'  '}</span>
+      <span class="pname" style="color:${p.color||'#fff'}">${p.name}</span>
+      <span class="ppts">${p.score} نقطة</span>
+    </div>
+  `).join('');
+
+  document.getElementById('btnPlayAgain').style.display=isHost?'block':'none';
+}
+
+function onPlayAgain(d){
+  if(isHost) return; // host already handles
+  // Re-init with same room, host will send new game-start
+  showScreen('lobby');
+  refreshLobby();
+}
+
+// ══════════════════════════════════════════════════
+//  TOUCH SWIPE
+// ══════════════════════════════════════════════════
+const wrap2 = document.getElementById('wrap');
+wrap2.addEventListener('touchstart',e=>{
+  touchStartX=e.touches[0].clientX;
+  touchStartY=e.touches[0].clientY;
+},{passive:true});
+wrap2.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-touchStartX;
+  const dy=e.changedTouches[0].clientY-touchStartY;
+  const minSwipe=30;
+  if(Math.abs(dx)<minSwipe&&Math.abs(dy)<minSwipe) return;
+  if(Math.abs(dx)>Math.abs(dy)) tryInput(dx>0?[1,0]:[-1,0]);
+  else tryInput(dy>0?[0,1]:[0,-1]);
+},{passive:true});
+
+// D-Pad
+const dirMap={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]};
+['u','d','l','r'].forEach(k=>{
+  const b=document.getElementById('db-'+k);
+  b.addEventListener('touchstart',e=>{
+    e.preventDefault(); b.classList.add('on'); tryInput(dirMap[k]);
+  },{passive:false});
+  b.addEventListener('touchend',()=>b.classList.remove('on'));
+});
+
+// ══════════════════════════════════════════════════
+//  SOLO MODE
+// ══════════════════════════════════════════════════
+function startSolo(){
+  const [cols,rows]=SIZE_MAP['lg'];
+  const mazeData=genMaze(cols,rows);
+  const trs=placeTreasures(mazeData,cols,rows);
+  maze=mazeData; COLS=cols; ROWS=rows;
+  MW=COLS*CELL; MH=ROWS*CELL;
+  treasures=trs; totalTreasures=trs.length;
+  BREAK_COOLDOWN_FRAMES=180; winScore=0;
+  roomConfig={gameSecs:0,breakSecs:3};
+
+  players={};
+  players[myId]={name:myName||'أنت',color:'#5599ff',
+    col:1,row:1,px:CELL+CELL/2,py:CELL+CELL/2,
+    score:0,dash:null,trail:[],breakCD:0};
+  myPlayer=players[myId];
+
+  setupCanvas();
+  particles=[]; floats=[]; pendingDash=null; localDash=null;
+  gameRunning=true;
+
+  // Hide online elements
+  document.getElementById('scoreboard').style.display='none';
+  document.getElementById('brkInd').style.display='block';
+  showScreen('game');
+  updateTimerUI();
+  cancelAnimationFrame(raf);
+  raf=requestAnimationFrame(gameLoop);
+}
+
+// ══════════════════════════════════════════════════
+//  BUTTON LISTENERS
+// ══════════════════════════════════════════════════
+document.getElementById('btnCreate').addEventListener('click',()=>{
+  myName=document.getElementById('nameInput').value.trim()||'لاعب';
+  showScreen('create');
+});
+
+document.getElementById('btnBackCreate').addEventListener('click',()=>showScreen('menu'));
+
+document.getElementById('btnConfirmCreate').addEventListener('click',async()=>{
+  myName=document.getElementById('nameInput').value.trim()||'لاعب';
+  roomConfig={
+    size:     document.getElementById('cfgSize').value,
+    maxPlayers:+document.getElementById('cfgMaxPlayers').value,
+    gameSecs:  +document.getElementById('cfgTime').value,
+    winScore:  +document.getElementById('cfgWinScore').value,
+    breakSecs: +document.getElementById('cfgBreak').value,
+    countdown: +document.getElementById('cfgCountdown').value,
+  };
+  roomCode=genCode();
+  isHost=true;
+
+  toast('جاري الاتصال...');
+  await connectAbly();
+  joinChannel(roomCode);
+
+  document.getElementById('roomCodeDisplay').textContent=roomCode;
+  document.getElementById('lobbySettings').innerHTML=
+    `متاهة: ${document.getElementById('cfgSize').options[document.getElementById('cfgSize').selectedIndex].text} | ` +
+    `وقت: ${roomConfig.gameSecs||'∞'}s | سكور الفوز: ${roomConfig.winScore||'∞'} | اختراق: ${roomConfig.breakSecs||0}s`;
+
+  showScreen('lobby');
+  refreshLobby();
+});
+
+document.getElementById('btnJoin').addEventListener('click',async()=>{
+  myName=document.getElementById('nameInput').value.trim()||'لاعب';
+  const code=document.getElementById('joinCode').value.trim().toUpperCase();
+  if(code.length<4){ toast('أدخل كود الغرفة'); return; }
+  isHost=false;
+  roomCode=code;
+  toast('جاري الاتصال...');
+  await connectAbly();
+  joinChannel(code);
+  document.getElementById('roomCodeDisplay').textContent=code;
+  showScreen('lobby');
+  refreshLobby();
+  toast('انضممت للغرفة!');
+});
+
+document.getElementById('btnStartGame').addEventListener('click',async()=>{
+  if(!isHost) return;
+  const members=await channel.presence.get();
+  if(members.length<1){ toast('لازم يكون فيه لاعبين!'); return; }
+  if(members.length>roomConfig.maxPlayers){
+    toast('العدد أكبر من المسموح!'); return;
+  }
+  hostStartGame();
+});
+
+document.getElementById('btnLeaveLobby').addEventListener('click',()=>{
+  if(channel){ channel.presence.leave(); channel.detach(); channel=null; }
+  isHost=false;
+  showScreen('menu');
+});
+
+document.getElementById('btnSolo').addEventListener('click',()=>{
+  myName=document.getElementById('nameInput').value.trim()||'لاعب';
+  startSolo();
+});
+
+document.getElementById('btnPlayAgain').addEventListener('click',()=>{
+  if(!isHost) return;
+  pub('play-again',{});
+  showScreen('lobby');
+  refreshLobby();
+});
+
+document.getElementById('btnBackMenu').addEventListener('click',()=>{
+  gameRunning=false;
+  clearInterval(timerInterval);
+  cancelAnimationFrame(raf);
+  showScreen('menu');
+});
+</script>
+</body>
+</html>
