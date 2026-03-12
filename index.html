@@ -6,383 +6,330 @@
 <title>متاهة الكنوز - أونلاين</title>
 <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;700&display=swap');
 
 :root {
-  --bg: #08080f;
-  --s1: #0f0f1a;
-  --s2: #161624;
-  --s3: #1e1e30;
-  --border: #ffffff0f;
-  --border2: #ffffff18;
-  --gold: #f5c842;
-  --gold2: #e8a020;
-  --text: #f0eeff;
-  --muted: #6b6890;
-  --green: #3dffa0;
-  --red: #ff4466;
-  --blue: #5588ff;
+  --bg:    #000007;
+  --c1:    #0a0a14;
+  --c2:    #111120;
+  --c3:    #1a1a2e;
+  --neon:  #00ff99;
+  --neon2: #00cc77;
+  --gold:  #ffcc00;
+  --acc:   #ff3366;
+  --blue:  #0099ff;
+  --text:  #e8eaff;
+  --dim:   #44445a;
+  --bdr:   #ffffff12;
 }
 
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 
-html, body {
-  width:100%; height:100%;
+html,body{
+  width:100%;height:100%;
   background:var(--bg);
   color:var(--text);
-  font-family:'Noto Sans Arabic','Space Grotesk',sans-serif;
-  overflow:hidden;
-  touch-action:none;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  font-size:14px;
+  font-family:'Noto Sans Arabic',monospace;
+  overflow:hidden;touch-action:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
 }
 
-/* ═══ SCREENS ═══ */
-.screen {
-  display:none; flex-direction:column; align-items:center; justify-content:center;
-  width:100%; height:100%; gap:0; padding:0;
-}
-.screen.active { display:flex; }
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;}
+.screen.active{display:flex;}
 
-/* ═══ MENU SCREEN ═══ */
-#s-menu {
-  background:
-    radial-gradient(ellipse 60% 40% at 50% 0%, #1a0e3a44 0%, transparent 70%),
-    var(--bg);
-}
+/* ══ MENU ══ */
+#s-menu{background:var(--bg);}
 
-.menu-logo {
-  font-family:'Space Grotesk',sans-serif;
-  font-size: clamp(22px,6vw,38px);
-  font-weight:700;
-  color: var(--gold);
-  letter-spacing:-0.5px;
-  margin-bottom:4px;
+.logo{
   text-align:center;
-  line-height:1.1;
+  margin-bottom:24px;
 }
-.menu-logo span { color:var(--text); opacity:0.3; font-size:0.55em; display:block; letter-spacing:4px; text-transform:uppercase; font-weight:400; margin-top:4px; }
-
-.menu-card {
-  width: min(340px, 92vw);
-  background: var(--s1);
-  border: 1px solid var(--border2);
-  border-radius:16px;
-  padding:20px 18px;
-  display:flex; flex-direction:column; gap:8px;
-  margin-top:16px;
-}
-
-.input-field {
-  width:100%;
-  background:var(--s2);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:11px 14px;
-  color:var(--text);
-  font-family:'Noto Sans Arabic',sans-serif;
-  font-size:13px;
-  outline:none;
-  transition:border-color 0.15s, background 0.15s;
-}
-.input-field::placeholder { color:var(--muted); }
-.input-field:focus { border-color:var(--gold); background:var(--s3); }
-
-.input-label {
-  font-size:10px;
-  color:var(--muted);
-  letter-spacing:.5px;
-  margin-bottom:4px;
-  display:block;
-}
-
-/* Primary CTA */
-.btn-primary {
-  width:100%; padding:13px;
-  background: linear-gradient(135deg, var(--gold), var(--gold2));
-  border:none; border-radius:10px;
-  color:#09090f; font-family:'Noto Sans Arabic',sans-serif;
-  font-size:14px; font-weight:700;
-  cursor:pointer;
-  transition: opacity 0.12s, transform 0.1s;
-}
-.btn-primary:active { opacity:0.85; transform:scale(0.98); }
-
-/* Ghost button */
-.btn-ghost {
-  width:100%; padding:11px;
-  background:transparent;
-  border:1px solid var(--border2);
-  border-radius:10px;
-  color:var(--muted);
-  font-family:'Noto Sans Arabic',sans-serif;
-  font-size:13px;
-  cursor:pointer;
-  transition: border-color 0.12s, color 0.12s;
-}
-.btn-ghost:active { border-color:var(--border2); color:var(--text); background:var(--s2); }
-
-/* Join row */
-.join-row {
-  display:flex; gap:8px; align-items:flex-end;
-}
-.join-row .input-field { flex:1; letter-spacing:4px; text-align:center; font-size:15px; font-weight:700; }
-.join-row .btn-ghost { width:auto; padding:11px 14px; white-space:nowrap; flex-shrink:0; }
-
-.sep { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11px; }
-.sep::before,.sep::after { content:''; flex:1; height:1px; background:var(--border); }
-
-/* ═══ CREATE SCREEN ═══ */
-#s-create { padding:14px; overflow-y:auto; }
-.create-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; width:min(380px,96vw); }
-.back-btn {
-  width:34px; height:34px; border-radius:50%;
-  background:var(--s2); border:1px solid var(--border2);
-  color:var(--muted); font-size:16px;
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; flex-shrink:0;
-}
-.back-btn:active { background:var(--s3); }
-.create-header h2 { font-family:'Space Grotesk',sans-serif; font-size:16px; color:var(--text); font-weight:600; letter-spacing:0; }
-
-.create-card {
-  width:min(380px,96vw);
-  background:var(--s1); border:1px solid var(--border);
-  border-radius:14px; padding:16px;
-  display:flex; flex-direction:column; gap:10px;
-}
-
-.cfg-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.cfg-item { display:flex; flex-direction:column; gap:5px; }
-.cfg-item label { font-size:10px; color:var(--muted); letter-spacing:.4px; }
-.cfg-item select {
-  background:var(--s2); border:1px solid var(--border);
-  color:var(--text); padding:8px 10px; border-radius:8px;
-  font-family:'Noto Sans Arabic',sans-serif; font-size:12px;
-  outline:none; width:100%;
-}
-.cfg-item select:focus { border-color:var(--gold); }
-select option { background:#161624; }
-
-.coop-badge {
-  background:#5588ff12; border:1px solid #5588ff22;
-  border-radius:8px; padding:10px 12px;
-  font-size:11px; color:#8899cc; line-height:1.6;
-}
-
-/* ═══ LOBBY SCREEN ═══ */
-#s-lobby { padding:16px; }
-.lobby-card {
-  width:min(340px,92vw);
-  background:var(--s1); border:1px solid var(--border2);
-  border-radius:16px; padding:18px;
-  display:flex; flex-direction:column; gap:10px; align-items:center;
-}
-
-.room-code-label { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
-#roomCodeDisplay {
-  font-family:'Space Grotesk',sans-serif; font-size:34px; font-weight:700;
-  color:var(--gold); letter-spacing:10px;
-  text-shadow:0 0 20px #f5c84244;
-}
-
-#lobbyPlayers { width:100%; display:flex; flex-direction:column; gap:5px; }
-.player-row {
-  display:flex; justify-content:space-between; align-items:center;
-  background:var(--s2); padding:8px 12px; border-radius:8px;
-  font-size:12px; border:1px solid var(--border);
-}
-.player-row .crown { color:var(--gold); }
-.player-row .ready-tag {
-  font-size:9px; color:var(--green);
-  background:#3dffa015; padding:2px 8px; border-radius:20px;
-  border:1px solid #3dffa020;
-}
-
-#lobbySettings { font-size:10px; color:var(--muted); text-align:center; line-height:1.9; }
-
-/* ═══ COUNTDOWN ═══ */
-#s-countdown { background:var(--bg); }
-#cdNum {
-  font-family:'Space Grotesk',sans-serif;
-  font-size:clamp(80px,20vw,120px);
+.logo-main{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:clamp(24px,7vw,42px);
   font-weight:700;
-  color:var(--gold);
-  text-shadow:0 0 60px #f5c84255, 0 0 120px #f5c84222;
+  color:var(--neon);
+  letter-spacing:-1px;
+  text-shadow:0 0 20px #00ff9966, 0 0 60px #00ff9922;
   line-height:1;
 }
-.cd-sub { color:var(--muted); font-size:13px; margin-top:8px; letter-spacing:2px; text-transform:uppercase; }
-
-/* ═══ GAME HUD ═══ */
-#hud {
-  width:100%; max-width:700px;
-  display:flex; align-items:center; gap:0;
-  background:var(--s1);
-  border-bottom:1px solid var(--border);
-  height:36px; flex-shrink:0;
+.logo-sub{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:6px;
+  color:var(--dim);text-transform:uppercase;
+  margin-top:6px;
 }
-.hitem {
-  display:flex; align-items:center; gap:5px;
-  padding:0 10px; height:100%;
-  border-left:1px solid var(--border);
-  font-size:11px; font-weight:600;
-  color:var(--text);
+
+.panel{
+  width:min(320px,90vw);
+  background:var(--c1);
+  border:1px solid var(--bdr);
+  border-top:2px solid var(--neon);
+  padding:20px 16px;
+  display:flex;flex-direction:column;gap:8px;
 }
-.hitem:first-child { border-left:none; }
-.hitem .hi-label { color:var(--muted); font-size:9px; font-weight:400; }
-.hitem .hi-val { color:var(--text); }
-.hitem.hi-time .hi-val { color:var(--gold); font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:700; }
-.hitem.hi-break .hi-val.ready { color:#ff7744; }
-.hitem.hi-break .hi-val.cd { color:var(--muted); }
-#hudRole { display:none; }
-#hudRole .hi-val { color:var(--green); font-size:10px; }
 
-#timerBar { height:2px; background:var(--s3); width:100%; flex-shrink:0; }
-#timerFill { height:100%; background:var(--gold); transition:width 0.5s linear; }
-
-/* ═══ CANVAS ═══ */
-#wrap {
-  position:relative; overflow:hidden;
-  flex:1; width:100%; max-width:700px;
-  border-top:none;
+.field-wrap{display:flex;flex-direction:column;gap:4px;}
+.field-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;}
+.field{
+  width:100%;background:var(--c2);
+  border:1px solid var(--bdr);
+  color:var(--text);padding:10px 12px;
+  font-family:'Noto Sans Arabic',monospace;font-size:13px;
+  outline:none;border-radius:0;
+  transition:border-color 0.1s;
 }
-#gc { display:block; width:100%; height:100%; }
+.field:focus{border-color:var(--neon);}
+.field::placeholder{color:var(--dim);}
 
-/* ═══ SCOREBOARD ═══ */
-#scoreboard {
-  position:absolute; top:8px; left:8px;
-  background:#08080fcc;
-  border:1px solid var(--border2);
-  border-radius:8px; padding:6px 10px;
-  min-width:110px; font-size:10px;
+.btn-main{
+  width:100%;padding:12px;background:var(--neon);
+  border:none;color:#000;
+  font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;
+  cursor:pointer;letter-spacing:1px;text-transform:uppercase;
+  transition:opacity 0.1s,transform 0.08s;
+}
+.btn-main:active{opacity:0.8;transform:scale(0.98);}
+
+.btn-line{
+  width:100%;padding:10px;background:transparent;
+  border:1px solid var(--bdr);color:var(--dim);
+  font-family:'IBM Plex Mono',monospace;font-size:11px;
+  cursor:pointer;letter-spacing:1px;text-transform:uppercase;
+  transition:border-color 0.1s,color 0.1s;
+}
+.btn-line:active{border-color:var(--neon);color:var(--neon);}
+
+.row-sep{
+  display:flex;align-items:center;gap:8px;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);
+}
+.row-sep::before,.row-sep::after{content:'';flex:1;height:1px;background:var(--bdr);}
+
+.join-row{display:flex;gap:6px;}
+.join-row .field{flex:1;letter-spacing:5px;text-align:center;font-weight:700;font-size:16px;}
+.join-row .btn-line{width:auto;padding:10px 14px;white-space:nowrap;flex-shrink:0;}
+
+/* ══ CREATE ══ */
+#s-create{padding:12px;overflow-y:auto;}
+
+.top-bar{
+  display:flex;align-items:center;gap:10px;
+  width:min(360px,96vw);margin-bottom:10px;
+}
+.btn-back{
+  width:32px;height:32px;background:var(--c2);
+  border:1px solid var(--bdr);color:var(--dim);
+  font-family:'IBM Plex Mono',monospace;font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;
+}
+.btn-back:active{color:var(--neon);border-color:var(--neon);}
+.top-bar-title{
+  font-family:'IBM Plex Mono',monospace;font-size:12px;
+  color:var(--dim);letter-spacing:2px;text-transform:uppercase;
+}
+
+.cfg-panel{
+  width:min(360px,96vw);
+  background:var(--c1);border:1px solid var(--bdr);border-top:2px solid var(--dim);
+  padding:14px;display:flex;flex-direction:column;gap:10px;
+}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.cfg-item{display:flex;flex-direction:column;gap:4px;}
+.cfg-item label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;}
+.cfg-item select{
+  background:var(--c2);border:1px solid var(--bdr);
+  color:var(--text);padding:8px 10px;
+  font-family:'Noto Sans Arabic',monospace;font-size:12px;
+  outline:none;border-radius:0;width:100%;
+}
+.cfg-item select:focus{border-color:var(--neon);}
+select option{background:#111120;}
+
+.coop-info{
+  background:#0099ff08;border:1px solid #0099ff22;border-left:2px solid var(--blue);
+  padding:8px 10px;font-size:11px;color:#6699bb;line-height:1.6;
+}
+
+/* ══ LOBBY ══ */
+#s-lobby{padding:16px;}
+.lobby-panel{
+  width:min(320px,90vw);
+  background:var(--c1);border:1px solid var(--bdr);border-top:2px solid var(--gold);
+  padding:18px;display:flex;flex-direction:column;gap:10px;align-items:center;
+}
+.code-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;}
+#roomCodeDisplay{
+  font-family:'IBM Plex Mono',monospace;font-size:36px;font-weight:700;
+  color:var(--gold);letter-spacing:12px;
+  text-shadow:0 0 16px #ffcc0055;
+}
+#lobbyPlayers{width:100%;display:flex;flex-direction:column;gap:4px;}
+.player-row{
+  display:flex;justify-content:space-between;align-items:center;
+  background:var(--c2);padding:7px 10px;font-size:12px;
+  border-left:2px solid var(--dim);
+}
+.player-row.is-host{border-left-color:var(--gold);}
+.player-row .ready-tag{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--neon);
+  letter-spacing:1px;
+}
+#lobbySettings{font-size:10px;color:var(--dim);text-align:center;line-height:1.8;font-family:'IBM Plex Mono',monospace;}
+
+/* ══ COUNTDOWN ══ */
+#s-countdown{background:var(--bg);}
+#cdNum{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:clamp(100px,25vw,160px);font-weight:700;
+  color:var(--neon);line-height:1;
+  text-shadow:0 0 40px #00ff9977,0 0 100px #00ff9933;
+}
+.cd-sub{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:5px;color:var(--dim);text-transform:uppercase;margin-top:8px;}
+
+/* ══ HUD ══ */
+#hud{
+  width:100%;
+  display:flex;align-items:stretch;
+  background:var(--c1);
+  border-bottom:1px solid var(--bdr);
+  height:32px;flex-shrink:0;
+}
+.hitem{
+  display:flex;align-items:center;gap:5px;
+  padding:0 10px;border-left:1px solid var(--bdr);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+}
+.hitem:first-child{border-left:none;}
+.hi-label{color:var(--dim);}
+.hi-val{color:var(--text);font-weight:600;}
+.hi-val.ready{color:var(--acc);}
+.hi-val.cd{color:var(--dim);}
+.hitem.hi-time .hi-val{color:var(--gold);font-size:12px;}
+#hudRole{display:none;}
+
+#timerBar{height:2px;background:var(--c2);width:100%;flex-shrink:0;}
+#timerFill{height:100%;background:var(--neon);transition:width 0.5s linear;}
+
+/* ══ CANVAS WRAP ══ */
+#wrap{
+  position:relative;overflow:hidden;
+  flex:1;width:100%;
+}
+#gc{display:block;width:100%;height:100%;}
+
+/* ══ SCOREBOARD ══ */
+#scoreboard{
+  position:absolute;top:6px;left:6px;
+  background:#000007dd;border:1px solid var(--bdr);border-left:2px solid var(--neon2);
+  padding:6px 8px;min-width:100px;font-size:10px;
+  font-family:'IBM Plex Mono',monospace;display:none;
+}
+#scoreboard .sb-row{display:flex;justify-content:space-between;gap:8px;padding:1px 0;}
+#scoreboard .sb-name{color:var(--dim);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#scoreboard .sb-pts{color:var(--gold);}
+#scoreboard .sb-me{color:var(--neon);}
+
+/* ══ MINIMAP ══ */
+#minimap{position:absolute;bottom:6px;right:6px;border:1px solid var(--bdr);opacity:0.75;}
+
+/* ══ D-PAD ══ */
+#dpad{
+  display:none;position:relative;
+  width:126px;height:126px;flex-shrink:0;
+  margin:5px auto 3px;
+}
+#dpad-center{display:none;}
+.db{
+  position:absolute;width:40px;height:40px;
+  background:var(--c2);border:1px solid var(--bdr);
+  color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;user-select:none;
+  transition:background 0.07s,color 0.07s,transform 0.06s;
+}
+.db.on{background:var(--neon);color:#000;border-color:var(--neon);transform:scale(0.9);}
+#db-u{top:0;left:43px;border-radius:4px 4px 0 0;}
+#db-d{bottom:0;left:43px;border-radius:0 0 4px 4px;}
+#db-l{top:43px;left:0;border-radius:4px 0 0 4px;}
+#db-r{top:43px;right:0;border-radius:0 4px 4px 0;}
+
+/* ══ BREAK INDICATOR ══ */
+#brkInd{
+  position:absolute;bottom:6px;left:6px;
+  background:#000007dd;border-left:2px solid var(--acc);
+  padding:3px 8px;font-size:9px;
+  font-family:'IBM Plex Mono',monospace;letter-spacing:1px;
   display:none;
 }
-#scoreboard .sb-row {
-  display:flex; justify-content:space-between; gap:10px;
-  padding:2px 0; border-bottom:1px solid #ffffff06;
-  align-items:center;
-}
-#scoreboard .sb-row:last-child { border:none; }
-#scoreboard .sb-name { color:#8882aa; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-#scoreboard .sb-pts { color:var(--gold); font-weight:700; font-family:'Space Grotesk',sans-serif; }
-#scoreboard .sb-me { color:var(--blue); }
 
-/* ═══ MINIMAP ═══ */
-#minimap {
-  position:absolute; bottom:8px; right:8px;
-  border:1px solid var(--border2); border-radius:4px; opacity:0.7;
+/* ══ END SCREEN ══ */
+#s-end{padding:14px;gap:12px;}
+.end-ttl{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:clamp(16px,4vw,22px);font-weight:700;
+  color:var(--gold);letter-spacing:2px;text-align:center;
+  text-shadow:0 0 14px #ffcc0044;
 }
+#endPodium{width:100%;display:flex;flex-direction:column;gap:4px;}
+.podium-row{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 12px;background:var(--c2);
+  border-left:2px solid var(--dim);font-size:13px;
+}
+.podium-row.first{border-left-color:var(--gold);background:var(--c1);}
+.podium-row .rank{font-size:16px;width:24px;text-align:center;}
+.podium-row .pname{flex:1;font-weight:700;}
+.podium-row .ppts{color:var(--gold);font-family:'IBM Plex Mono',monospace;font-weight:700;}
 
-/* ═══ D-PAD — new design ═══ */
-#dpad {
-  display:none;
-  position:relative;
-  width:130px; height:130px;
-  flex-shrink:0; margin:6px auto 4px;
+/* ══ TOAST ══ */
+#toast{
+  position:fixed;bottom:14px;left:50%;transform:translateX(-50%) translateY(6px);
+  background:var(--c2);border:1px solid var(--bdr);border-top:1px solid var(--neon2);
+  color:var(--text);padding:7px 14px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;
+  opacity:0;transition:opacity 0.2s,transform 0.2s;
+  pointer-events:none;z-index:100;white-space:nowrap;
 }
-.db {
-  position:absolute; width:40px; height:40px;
-  background:var(--s2);
-  border:1px solid var(--border2);
-  color:var(--muted); font-size:12px;
-  display:flex; align-items:center; justify-content:center;
-  border-radius:10px; cursor:pointer;
-  user-select:none;
-  transition: background 0.08s, transform 0.07s;
-  font-family:'Space Grotesk',sans-serif; font-weight:700;
-}
-.db.on {
-  background:var(--gold);
-  border-color:var(--gold);
-  color:#09090f;
-  transform:scale(0.91);
-}
-/* Cross layout: center at 45,45 */
-#db-u { top:0;  left:45px; border-radius:10px 10px 4px 4px; }
-#db-d { bottom:0; left:45px; border-radius:4px 4px 10px 10px; }
-#db-l { top:45px; left:0; border-radius:10px 4px 4px 10px; }
-#db-r { top:45px; right:0; border-radius:4px 10px 10px 4px; }
-#dpad-center { display:none; }
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-/* ═══ BREAK INDICATOR ═══ */
-#brkInd {
-  position:absolute; bottom:8px; left:8px;
-  background:#08080fcc; border:1px solid var(--border2);
-  border-radius:6px; padding:4px 8px;
-  font-size:9px; color:#ff7744;
-  display:none; font-weight:600; letter-spacing:.3px;
-}
-
-/* ═══ END SCREEN ═══ */
-#s-end { padding:16px; }
-.end-title {
-  font-family:'Space Grotesk',sans-serif;
-  font-size:clamp(18px,5vw,26px); font-weight:700;
-  color:var(--text); text-align:center; margin-bottom:4px;
-}
-#endPodium { width:100%; display:flex; flex-direction:column; gap:5px; margin-bottom:4px; }
-.podium-row {
-  display:flex; align-items:center; gap:10px;
-  padding:10px 14px; border-radius:10px;
-  background:var(--s2); font-size:13px;
-  border:1px solid var(--border);
-  transition: background 0.2s;
-}
-.podium-row.first { background:linear-gradient(135deg,#f5c84212,#e8a02008); border-color:#f5c84230; }
-.podium-row .rank { font-size:20px; width:26px; text-align:center; }
-.podium-row .pname { flex:1; font-weight:600; }
-.podium-row .ppts { color:var(--gold); font-weight:700; font-family:'Space Grotesk',sans-serif; font-size:15px; }
-
-/* ═══ TOAST ═══ */
-#toast {
-  position:fixed; bottom:16px; left:50%; transform:translateX(-50%) translateY(8px);
-  background:var(--s2); border:1px solid var(--border2);
-  color:var(--text); padding:8px 16px; border-radius:20px;
-  font-size:11px; opacity:0;
-  transition:opacity 0.2s, transform 0.2s;
-  pointer-events:none; z-index:100; white-space:nowrap;
-}
-#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-
-@media (pointer:coarse) { #dpad { display:block; } }
-@media (pointer:fine)   { #dpad { display:block; } }
-@media (max-width:500px) { #hud { font-size:9px; } #hud .hi-label { display:none; } }
+@media (pointer:coarse){#dpad{display:block;}}
+@media (pointer:fine){#dpad{display:block;}}
+@media (max-width:400px){#hud{font-size:9px;}.hi-label{display:none;}}
 </style>
 </head>
 <body>
 
-<!-- ══ SCREEN: MENU ══ -->
+<!-- ══ MENU ══ -->
 <div id="s-menu" class="screen active">
-  <div class="menu-logo">
-    🏺 متاهة الكنوز
-    <span>MAZE · ONLINE</span>
+  <div class="logo">
+    <div class="logo-main">🏺 متاهة الكنوز</div>
+    <div class="logo-sub">maze · online · v4</div>
   </div>
-  <div class="menu-card">
-    <span class="input-label">اسمك في اللعبة</span>
-    <input class="input-field" id="nameInput" placeholder="أدخل اسمك..." maxlength="16">
-
-    <button class="btn-primary" id="btnCreate">إنشاء غرفة جديدة</button>
-
-    <div class="sep">أو انضم</div>
-
-    <div class="join-row">
-      <input class="input-field" id="joinCode" placeholder="XXXX" maxlength="6" style="text-transform:uppercase">
-      <button class="btn-ghost" id="btnJoin">انضم ←</button>
+  <div class="panel">
+    <div class="field-wrap">
+      <span class="field-lbl">اسمك</span>
+      <input class="field" id="nameInput" placeholder="أدخل اسمك..." maxlength="16">
     </div>
-
-    <div class="sep">أو</div>
-
-    <button class="btn-ghost" id="btnSolo">🎮 لعب منفرد</button>
+    <button class="btn-main" id="btnCreate">إنشاء غرفة</button>
+    <div class="row-sep">أو انضم</div>
+    <div class="join-row">
+      <input class="field" id="joinCode" placeholder="XXXX" maxlength="6" style="text-transform:uppercase">
+      <button class="btn-line" id="btnJoin">← انضم</button>
+    </div>
+    <div class="row-sep">أو</div>
+    <button class="btn-line" id="btnSolo">solo · منفرد</button>
   </div>
 </div>
 
-<!-- ══ SCREEN: CREATE ROOM ══ -->
+<!-- ══ CREATE ══ -->
 <div id="s-create" class="screen">
-  <div class="create-header">
-    <div class="back-btn" id="btnBackCreate">←</div>
-    <h2>إعدادات الغرفة</h2>
+  <div class="top-bar">
+    <div class="btn-back" id="btnBackCreate">←</div>
+    <div class="top-bar-title">إعدادات الغرفة</div>
   </div>
-  <div class="create-card">
+  <div class="cfg-panel">
     <div class="cfg-grid">
       <div class="cfg-item">
         <label>حجم المتاهة</label>
@@ -397,15 +344,14 @@ select option { background:#161624; }
       <div class="cfg-item">
         <label>أقصى لاعبين</label>
         <select id="cfgMaxPlayers">
-          <option value="2">2 لاعبين</option>
-          <option value="4" selected>4 لاعبين</option>
-          <option value="6">6 لاعبين</option>
-          <option value="8">8 لاعبين</option>
-          <option value="10">10 لاعبين</option>
+          <option value="2">2</option>
+          <option value="4" selected>4</option>
+          <option value="6">6</option>
+          <option value="8">8</option>
+          <option value="10">10</option>
         </select>
       </div>
     </div>
-
     <div class="cfg-item">
       <label>نوع اللعبة</label>
       <select id="cfgGameMode">
@@ -413,26 +359,24 @@ select option { background:#161624; }
         <option value="coop">🤝 تعاوني – فرق من اتنين</option>
       </select>
     </div>
-
-    <div id="coopHint" style="display:none" class="coop-badge">
-      كل أتنين يكوّنوا فريق — الداشر يجمع الكنوز، الحيطة تحمي المسار
+    <div id="coopHint" style="display:none" class="coop-info">
+      كل اتنين فريق — الداشر يجمع الكنوز، الحيطة تسد الطريق
     </div>
-
     <div class="cfg-grid">
       <div class="cfg-item">
         <label>وقت المباراة</label>
         <select id="cfgTime">
-          <option value="60">60 ث</option>
-          <option value="120" selected>120 ث</option>
-          <option value="180">180 ث</option>
-          <option value="300">300 ث</option>
-          <option value="0">بلا وقت</option>
+          <option value="60">60s</option>
+          <option value="120" selected>120s</option>
+          <option value="180">180s</option>
+          <option value="300">300s</option>
+          <option value="0">∞</option>
         </select>
       </div>
       <div class="cfg-item">
         <label>سكور الفوز</label>
         <select id="cfgWinScore">
-          <option value="0">بلا حد</option>
+          <option value="0">∞</option>
           <option value="300">300</option>
           <option value="500" selected>500</option>
           <option value="1000">1000</option>
@@ -440,52 +384,51 @@ select option { background:#161624; }
         </select>
       </div>
       <div class="cfg-item">
-        <label>cooldown الاختراق</label>
+        <label>cooldown كسر</label>
         <select id="cfgBreak">
-          <option value="3" selected>3 ث</option>
-          <option value="5">5 ث</option>
-          <option value="10">10 ث</option>
+          <option value="3" selected>3s</option>
+          <option value="5">5s</option>
+          <option value="10">10s</option>
           <option value="0">حر</option>
         </select>
       </div>
       <div class="cfg-item">
-        <label>Countdown</label>
+        <label>countdown</label>
         <select id="cfgCountdown">
-          <option value="3" selected>3 ث</option>
-          <option value="5">5 ث</option>
-          <option value="10">10 ث</option>
+          <option value="3" selected>3s</option>
+          <option value="5">5s</option>
+          <option value="10">10s</option>
         </select>
       </div>
     </div>
-
-    <button class="btn-primary" id="btnConfirmCreate">إنشاء الغرفة ←</button>
+    <button class="btn-main" id="btnConfirmCreate">إنشاء الغرفة →</button>
   </div>
 </div>
 
-<!-- ══ SCREEN: LOBBY ══ -->
+<!-- ══ LOBBY ══ -->
 <div id="s-lobby" class="screen">
-  <div class="lobby-card">
-    <div class="room-code-label">كود الغرفة</div>
+  <div class="lobby-panel">
+    <div class="code-lbl">كود الغرفة</div>
     <div id="roomCodeDisplay">----</div>
     <div id="lobbyPlayers"></div>
     <div id="lobbySettings"></div>
-    <button class="btn-primary" id="btnStartGame" style="display:none">▶ ابدأ اللعبة</button>
-    <div id="waitingMsg" style="color:var(--muted);font-size:12px;">في انتظار صاحب الغرفة...</div>
-    <button class="btn-ghost" id="btnLeaveLobby">مغادرة</button>
+    <button class="btn-main" id="btnStartGame" style="display:none">▶ ابدأ اللعبة</button>
+    <div id="waitingMsg" style="color:var(--dim);font-size:11px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;">waiting for host...</div>
+    <button class="btn-line" id="btnLeaveLobby">مغادرة</button>
   </div>
 </div>
 
-<!-- ══ SCREEN: COUNTDOWN ══ -->
+<!-- ══ COUNTDOWN ══ -->
 <div id="s-countdown" class="screen">
   <div id="cdNum">3</div>
   <div class="cd-sub">استعد</div>
 </div>
 
-<!-- ══ SCREEN: GAME ══ -->
+<!-- ══ GAME ══ -->
 <div id="s-game" class="screen" style="padding:0;gap:0;">
   <div id="hud">
     <div class="hitem hi-time">
-      <span class="hi-label">⏱</span>
+      <span class="hi-label">T</span>
       <span class="hi-val" id="hudTime">--</span>
     </div>
     <div class="hitem">
@@ -493,12 +436,12 @@ select option { background:#161624; }
       <span class="hi-val" id="hudCollected">0/0</span>
     </div>
     <div class="hitem">
-      <span class="hi-label">★</span>
+      <span class="hi-label">PTS</span>
       <span class="hi-val" id="hudScore">0</span>
     </div>
     <div class="hitem hi-break">
-      <span class="hi-label">💥</span>
-      <span class="hi-val ready" id="hudBreak">جاهز</span>
+      <span class="hi-label">BRK</span>
+      <span class="hi-val ready" id="hudBreak">RDY</span>
     </div>
     <div class="hitem" id="hudRole"></div>
   </div>
@@ -507,7 +450,7 @@ select option { background:#161624; }
     <canvas id="gc"></canvas>
     <div id="scoreboard"></div>
     <canvas id="minimap" width="80" height="80"></canvas>
-    <div id="brkInd">💥 جاهز!</div>
+    <div id="brkInd">BRK · RDY</div>
   </div>
   <div id="dpad">
     <div id="dpad-center"></div>
@@ -518,13 +461,13 @@ select option { background:#161624; }
   </div>
 </div>
 
-<!-- ══ SCREEN: END ══ -->
-<div id="s-end" class="screen" style="padding:16px;gap:12px;">
-  <div class="end-title" id="endTitle">انتهت اللعبة</div>
-  <div class="lobby-card" style="width:min(340px,92vw)">
+<!-- ══ END ══ -->
+<div id="s-end" class="screen" style="padding:14px;gap:12px;">
+  <div class="end-ttl" id="endTitle">انتهت اللعبة</div>
+  <div class="lobby-panel" style="width:min(320px,90vw)">
     <div id="endPodium"></div>
-    <button class="btn-primary" id="btnPlayAgain" style="display:none">↺ لعبة جديدة</button>
-    <button class="btn-ghost" id="btnBackMenu">القائمة الرئيسية</button>
+    <button class="btn-main" id="btnPlayAgain" style="display:none">↺ لعبة جديدة</button>
+    <button class="btn-line" id="btnBackMenu">القائمة الرئيسية</button>
   </div>
 </div>
 
@@ -539,8 +482,8 @@ const CELL = 36;
 const SIZE_MAP = { sm:[11,11], md:[17,17], lg:[25,25], xl:[31,31], xxl:[41,41] };
 const PLAYER_COLORS = ['#5588ff','#ff5566','#44dd88','#ffaa33','#cc55ff','#55ccff','#ff8833','#88ff44'];
 
-// Animal emojis for players (in order)
-const PLAYER_ANIMALS = ['🐭','🐱','🦄','🐒','🐸','🦊','🐼','🐧'];
+// Animal emojis for players (in order) - matching user spec
+const PLAYER_ANIMALS = ['🐭','🐱','🦄','🐒','🐸','🪼','🦊','🐼'];
 
 // Team wall colors for coop mode (matching animal theme)
 // 🐭=white/gray, 🐱=yellow, 🦄=purple, 🐒=orange, 🐸=green, 🦊=orange, 🐼=white, 🐧=blue
@@ -979,8 +922,11 @@ function setupCanvas() {
   gc = document.getElementById('gc');
   ctx = gc.getContext('2d');
   const wrap = document.getElementById('wrap');
-  const ww = Math.min(window.innerWidth, 700);
-  const wh = window.innerHeight - 80;
+  const ww = window.innerWidth;
+  // HUD=32px, timerBar=2px, dpad visible on touch=136px+margin, else ~0
+  const hasTouch = window.matchMedia('(pointer:coarse)').matches || true;
+  const dpadH = hasTouch ? 136 : 0;
+  const wh = window.innerHeight - 34 - dpadH;
   wrap.style.width  = ww + 'px';
   wrap.style.height = wh + 'px';
   gc.width  = ww;
@@ -1238,6 +1184,19 @@ function getScores(){
 // ══════════════════════════════════════════════════
 //  DRAW
 // ══════════════════════════════════════════════════
+// Flat pixel colors per animal
+const ANIMAL_WALL_FLAT = {
+  '🐸': '#2d7a2d',  // green
+  '🐱': '#a08000',  // yellow
+  '🐭': '#666688',  // gray
+  '🦄': '#7733aa',  // purple
+  '🪼': '#1155aa',  // blue
+  '🐒': '#aa5500',  // orange
+  '🦊': '#cc4400',
+  '🐼': '#555566',
+  '🐧': '#224488',
+};
+
 function drawGame(){
   if(!ctx||!myPlayer) return;
   ctx.clearRect(0,0,VW,VH);
@@ -1247,55 +1206,49 @@ function drawGame(){
   ctx.save();
   ctx.translate(-offX,-offY);
 
-  // Floor
+  // ── Floor: solid dark tiles ──
+  const floorA='#0c0c18', floorB='#0e0e1c';
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(maze[r][c]===0){
-      ctx.fillStyle=(c+r)%2===0?'#0e0b1e99':'#0b0818aa';
+      ctx.fillStyle=(c+r)%2===0?floorA:floorB;
       ctx.fillRect(c*CELL,r*CELL,CELL,CELL);
     }
   }
 
-  // Walls
-  const isCoop = roomConfig.gameMode==='coop';
+  // ── Walls: flat solid colored blocks ──
+  const isCoop=roomConfig.gameMode==='coop';
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(maze[r][c]===1){
-      const x=c*CELL,y=r*CELL;
-      let wallCol='#12102a', wallTop='#1e1a40', wallLeft='#181530', wallShine='#302860', wallBot='#090815', wallRight='#0c0b1e';
-
+      const x=c*CELL, y=r*CELL;
+      let col='#1a1a30';
       if(isCoop && cachedWallTints){
         const ani=cachedWallTints[r*1000+c];
-        if(ani && ANIMAL_TEAM_WALL_COLORS[ani]){
-          const tc=ANIMAL_TEAM_WALL_COLORS[ani];
-          wallCol=hexMix(tc,'#12102a',0.22);
-          wallTop=hexMix(tc,'#1e1a40',0.28);
-          wallShine=hexMix(tc,'#302860',0.38);
-        }
+        if(ani && ANIMAL_WALL_FLAT[ani]) col=ANIMAL_WALL_FLAT[ani];
       }
-
-      ctx.fillStyle=wallCol; ctx.fillRect(x,y,CELL,CELL);
-      ctx.fillStyle=wallTop; ctx.fillRect(x,y,CELL,4);
-      ctx.fillStyle=wallLeft; ctx.fillRect(x,y,3,CELL);
-      ctx.fillStyle=wallShine; ctx.fillRect(x,y,2,2);
-      ctx.fillStyle=wallBot; ctx.fillRect(x,y+CELL-2,CELL,2);
-      ctx.fillStyle=wallRight; ctx.fillRect(x+CELL-2,y,2,CELL);
+      ctx.fillStyle=col;
+      ctx.fillRect(x,y,CELL,CELL);
+      // Single pixel lighter top edge for depth hint
+      ctx.fillStyle='rgba(255,255,255,0.08)';
+      ctx.fillRect(x,y,CELL,1);
+      ctx.fillStyle='rgba(0,0,0,0.25)';
+      ctx.fillRect(x,y+CELL-1,CELL,1);
     }
   }
 
-  // Trails (local player)
+  // ── Trails (local player dash) ──
   if(localDash){
+    ctx.globalAlpha=0;
     localDash.trail.forEach(t=>{
       if(t.life<=0) return;
-      const tx=t.c*CELL+CELL/2, ty=t.r*CELL+CELL/2;
-      ctx.globalAlpha=t.life*0.5;
-      const g=ctx.createRadialGradient(tx,ty,0,tx,ty,CELL*.45);
-      g.addColorStop(0,myPlayer.color||'#5599ff'); g.addColorStop(1,'transparent');
-      ctx.fillStyle=g;
-      ctx.beginPath(); ctx.arc(tx,ty,CELL*.45,0,Math.PI*2); ctx.fill();
+      const tx=t.c*CELL, ty=t.r*CELL;
+      ctx.globalAlpha=t.life*0.3;
+      ctx.fillStyle=myPlayer.color||'#00ff99';
+      ctx.fillRect(tx+2,ty+2,CELL-4,CELL-4);
     });
     ctx.globalAlpha=1;
   }
 
-  // Other players' dash trails
+  // ── Other players' movement interpolation ──
   Object.entries(players).forEach(([id,p])=>{
     if(id===myId) return;
     if(p.dash){
@@ -1308,154 +1261,90 @@ function drawGame(){
     }
   });
 
-  // Treasures - static position, subtle glow pulse only
+  // ── Treasures: flat emoji centered in cell ──
   treasures.forEach(t=>{
     if(t.got) return;
     const tx=t.c*CELL+CELL/2;
     const ty=t.r*CELL+CELL/2;
-    // Glow (pulse only, no position change)
-    ctx.save();
-    const glowR=CELL*.55+Math.sin(t.t)*.04*CELL;
-    const g=ctx.createRadialGradient(tx,ty,0,tx,ty,glowR);
-    g.addColorStop(0,t.glow+'44'); g.addColorStop(1,'transparent');
-    ctx.fillStyle=g;
-    ctx.globalAlpha=0.45+Math.sin(t.t)*.1;
-    ctx.beginPath(); ctx.arc(tx,ty,glowR,0,Math.PI*2); ctx.fill();
-    ctx.globalAlpha=1; ctx.restore();
-    // Emoji - static
-    ctx.save();
-    ctx.font=`${Math.round(CELL*.68)}px serif`;
+    // Subtle background glow square
+    ctx.globalAlpha=0.18+Math.sin(t.t)*0.06;
+    ctx.fillStyle=t.glow;
+    ctx.fillRect(t.c*CELL+2,t.r*CELL+2,CELL-4,CELL-4);
+    ctx.globalAlpha=1;
+    // Emoji
+    ctx.font=`${Math.round(CELL*.62)}px serif`;
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.shadowColor=t.glow; ctx.shadowBlur=8;
-    ctx.fillText(t.sym,tx,ty);
-    ctx.shadowBlur=0; ctx.restore();
-    // Value
-    ctx.fillStyle='#ffffff77';
-    ctx.font=`bold ${Math.round(CELL*.2)}px sans-serif`;
-    ctx.textAlign='center'; ctx.textBaseline='top';
-    ctx.fillText(t.val,tx,ty+CELL*.32);
+    ctx.fillText(t.sym,tx,ty+1);
   });
 
-  // Build team color map for coop rings
-  const teamColors={};
-  if(roomConfig.gameMode==='coop'){
-    const TEAM_RING_COLORS=['#e8c87a','#ff6688','#44ffcc','#ff9944','#bb44ff'];
-    let ti=0;
-    const seen={};
-    Object.values(players).forEach(p=>{
-      if(!(p.teamId in seen)){ seen[p.teamId]=TEAM_RING_COLORS[ti++%TEAM_RING_COLORS.length]; }
-      teamColors[p.teamId]=seen[p.teamId];
-    });
-  }
-
-  // Other players
+  // ── Players ──
   Object.entries(players).forEach(([id,p])=>{
     if(id===myId) return;
-    drawPlayer(p.px,p.py,p.color,p.name,false,p.role||'dasher',p.teamId,teamColors[p.teamId]||null,p.animal||'🐭');
+    drawPlayer(p.px,p.py,p.color,p.name,false,p.role||'dasher',p.animal||'🐭');
   });
+  if(myPlayer) drawPlayer(myPlayer.px,myPlayer.py,myPlayer.color||'#00ff99',myPlayer.name,true,myPlayer.role||'dasher',myPlayer.animal||'🐭');
 
-  // My player (drawn on top)
-  if(myPlayer) drawPlayer(myPlayer.px,myPlayer.py,myPlayer.color||'#5588ff',myPlayer.name,true,myPlayer.role||'dasher',myPlayer.teamId,teamColors[myPlayer.teamId]||null,myPlayer.animal||'🐭');
-
-  // Particles - glowing circles
+  // ── Particles: simple squares ──
   particles.forEach(p=>{
-    ctx.globalAlpha=p.life*0.9;
+    ctx.globalAlpha=p.life*0.85;
     ctx.fillStyle=p.col;
-    ctx.shadowColor=p.col;
-    ctx.shadowBlur=p.size*3;
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,p.size*.7,0,Math.PI*2);
-    ctx.fill();
+    const s=Math.max(1,p.size*.6);
+    ctx.fillRect(p.x-s/2,p.y-s/2,s,s);
   });
-  ctx.shadowBlur=0;
   ctx.globalAlpha=1;
 
-  // Floats - with shadow for readability
+  // ── Floats ──
   floats.forEach(f=>{
     ctx.globalAlpha=Math.min(f.life,1);
-    ctx.font=`bold 14px sans-serif`;
+    ctx.font='bold 13px IBM Plex Mono,monospace';
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.strokeStyle='#000000cc'; ctx.lineWidth=4;
-    ctx.strokeText(f.text,f.x,f.y);
     ctx.fillStyle=f.col;
     ctx.fillText(f.text,f.x,f.y);
   });
   ctx.globalAlpha=1;
 
   ctx.restore();
-
-  // Vignette overlay
-  const vig=ctx.createRadialGradient(VW/2,VH/2,VH*.3,VW/2,VH/2,VH*.85);
-  vig.addColorStop(0,'transparent'); vig.addColorStop(1,'rgba(0,0,0,0.45)');
-  ctx.fillStyle=vig; ctx.fillRect(0,0,VW,VH);
-
-  // Minimap
   drawMinimap(offX,offY);
   updateScoreboard();
 }
 
-function drawPlayer(x,y,color,name,isMe=false,role='dasher',teamId=null,teamColor=null,animal='🐭'){
-  const R=CELL*.42;
-
-  // Outer glow
-  const grd=ctx.createRadialGradient(x,y,0,x,y,R*2.5);
-  grd.addColorStop(0,color+'28'); grd.addColorStop(1,'transparent');
-  ctx.fillStyle=grd;
-  ctx.beginPath(); ctx.arc(x,y,R*2.5,0,Math.PI*2); ctx.fill();
+function drawPlayer(x,y,color,name,isMe=false,role='dasher',animal='🐭'){
+  const S=CELL-4; // square size slightly smaller than cell
+  const px=x-S/2, py=y-S/2;
 
   if(role==='wall'){
-    // In coop mode, wall player shows as a solid colored block with emoji
-    const wc = teamColor || color;
-    ctx.save();
-    // Colored square background
-    ctx.globalAlpha=0.85;
-    ctx.fillStyle=wc+'55';
-    roundRect(ctx, x-R, y-R, R*2, R*2, 6);
-    ctx.fill();
-    ctx.globalAlpha=1;
-    // Border
-    ctx.strokeStyle=isMe?'#fff':wc+'aa'; ctx.lineWidth=isMe?2:1.5;
-    roundRect(ctx, x-R, y-R, R*2, R*2, 6); ctx.stroke();
-    ctx.restore();
-    // Animal emoji
-    ctx.save();
-    ctx.font=`${Math.round(R*1.55)}px serif`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(animal,x,y+1);
-    ctx.restore();
-  } else {
-    // Dasher - clean circle + emoji
+    // Solid flat colored square = wall player
+    const wallCol=ANIMAL_WALL_FLAT[animal]||'#444466';
+    ctx.fillStyle=wallCol;
+    ctx.fillRect(px,py,S,S);
+    // White border if it's me
     if(isMe){
-      // White ring for "me"
-      ctx.save();
-      ctx.strokeStyle='rgba(255,255,255,0.7)'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.arc(x,y,R+2,0,Math.PI*2); ctx.stroke();
-      ctx.restore();
+      ctx.strokeStyle='#ffffff';ctx.lineWidth=2;
+      ctx.strokeRect(px+1,py+1,S-2,S-2);
     }
-    // Subtle circle bg
-    ctx.save();
-    ctx.globalAlpha=0.35;
-    ctx.fillStyle=color;
-    ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2); ctx.fill();
-    ctx.globalAlpha=1;
-    ctx.restore();
-    // Animal emoji
-    ctx.save();
-    ctx.font=`${Math.round(R*1.65)}px serif`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
+    // Small animal emoji top-right corner
+    ctx.font=`${Math.round(S*0.42)}px serif`;
+    ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText(animal,px+2,py+2);
+  } else {
+    // Runner: just the emoji, centered in the cell
+    if(isMe){
+      // Highlight: neon square behind
+      ctx.fillStyle='#00ff9918';
+      ctx.fillRect(px,py,S,S);
+      ctx.strokeStyle='#00ff99';ctx.lineWidth=1.5;
+      ctx.strokeRect(px+0.75,py+0.75,S-1.5,S-1.5);
+    }
+    ctx.font=`${Math.round(S*0.82)}px serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(animal,x,y+1);
-    ctx.restore();
   }
 
-  // Name tag
-  const nm = (isMe?'› ':'')+name;
-  ctx.font=`${isMe?'bold ':''} 9px sans-serif`;
-  const tw=ctx.measureText(nm).width;
-  ctx.fillStyle='#08051088';
-  ctx.fillRect(x-tw/2-3, y-R-14, tw+6, 12);
-  ctx.fillStyle=isMe?'#fff':'#b0a8d0';
-  ctx.textAlign='center'; ctx.textBaseline='bottom';
-  ctx.fillText(nm,x,y-R-3);
+  // Name tag: clean monospace label above
+  ctx.font='bold 8px IBM Plex Mono,monospace';
+  ctx.textAlign='center';ctx.textBaseline='bottom';
+  ctx.fillStyle=isMe?'#00ff99':'#44445a';
+  ctx.fillText(name,x,py-2);
 }
 
 function hexMix(hex1, hex2, t){
