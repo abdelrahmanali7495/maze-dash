@@ -6,21 +6,24 @@
 <title>متاهة الكنوز - أونلاين</title>
 <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+Arabic:wght@400;700;900&family=Orbitron:wght@700;900&display=swap');
 
 :root {
-  --bg:    #000007;
-  --c1:    #0a0a14;
-  --c2:    #111120;
-  --c3:    #1a1a2e;
-  --neon:  #00ff99;
-  --neon2: #00cc77;
-  --gold:  #ffcc00;
-  --acc:   #ff3366;
-  --blue:  #0099ff;
-  --text:  #e8eaff;
-  --dim:   #44445a;
-  --bdr:   #ffffff12;
+  --bg:    #04040d;
+  --c1:    #080815;
+  --c2:    #0d0d1f;
+  --c3:    #131328;
+  --neon:  #00ffa3;
+  --neon2: #00cc7a;
+  --gold:  #ffd700;
+  --acc:   #ff2d55;
+  --blue:  #007aff;
+  --violet:#b044ff;
+  --text:  #d8deff;
+  --dim:   #3a3a58;
+  --bdr:   #ffffff0e;
+  --glow-g: 0 0 12px #00ffa355, 0 0 40px #00ffa310;
+  --glow-gold: 0 0 14px #ffd70055, 0 0 40px #ffd70015;
 }
 
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -29,188 +32,246 @@ html,body{
   width:100%;height:100%;
   background:var(--bg);
   color:var(--text);
-  font-family:'Noto Sans Arabic',monospace;
+  font-family:'Space Mono','Noto Sans Arabic',monospace;
   overflow:hidden;touch-action:none;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
 }
 
-.screen{display:none;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;}
+/* Animated background grid */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,255,163,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,163,0.025) 1px, transparent 1px);
+  background-size:40px 40px;
+  animation:gridMove 20s linear infinite;
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,255,163,0.04) 0%, transparent 70%),
+             radial-gradient(ellipse 60% 40% at 80% 100%, rgba(176,68,255,0.04) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
+}
+@keyframes gridMove{to{background-position:0 40px;}}
+
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;position:relative;z-index:1;}
 .screen.active{display:flex;}
 
 /* ══ MENU ══ */
-#s-menu{background:var(--bg);}
+#s-menu{background:transparent;}
 
 .logo{
   text-align:center;
-  margin-bottom:24px;
+  margin-bottom:28px;
 }
 .logo-main{
-  font-family:'IBM Plex Mono',monospace;
-  font-size:clamp(24px,7vw,42px);
-  font-weight:700;
+  font-family:'Orbitron',monospace;
+  font-size:clamp(20px,6vw,36px);
+  font-weight:900;
   color:var(--neon);
-  letter-spacing:-1px;
-  text-shadow:0 0 20px #00ff9966, 0 0 60px #00ff9922;
+  letter-spacing:2px;
+  text-shadow:var(--glow-g);
   line-height:1;
+  animation:logoPulse 3s ease-in-out infinite;
 }
+.logo-icon{font-size:clamp(28px,8vw,48px);display:block;margin-bottom:8px;filter:drop-shadow(0 0 12px #ffd70088);}
 .logo-sub{
-  font-family:'IBM Plex Mono',monospace;
-  font-size:10px;letter-spacing:6px;
+  font-family:'Space Mono',monospace;
+  font-size:9px;letter-spacing:8px;
   color:var(--dim);text-transform:uppercase;
-  margin-top:6px;
+  margin-top:8px;
+}
+@keyframes logoPulse{
+  0%,100%{text-shadow:var(--glow-g);}
+  50%{text-shadow:0 0 20px #00ffa388, 0 0 60px #00ffa330, 0 0 100px #00ffa310;}
 }
 
 .panel{
-  width:min(320px,90vw);
-  background:var(--c1);
-  border:1px solid var(--bdr);
+  width:min(340px,92vw);
+  background:rgba(8,8,21,0.9);
+  border:1px solid rgba(0,255,163,0.12);
   border-top:2px solid var(--neon);
-  padding:20px 16px;
-  display:flex;flex-direction:column;gap:8px;
+  padding:22px 18px;
+  display:flex;flex-direction:column;gap:10px;
+  backdrop-filter:blur(20px);
+  box-shadow:0 0 40px rgba(0,255,163,0.04), 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+  position:relative;overflow:hidden;
+}
+.panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,255,163,0.4),transparent);
 }
 
-.field-wrap{display:flex;flex-direction:column;gap:4px;}
-.field-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;}
+.field-wrap{display:flex;flex-direction:column;gap:5px;}
+.field-lbl{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;}
 .field{
-  width:100%;background:var(--c2);
-  border:1px solid var(--bdr);
-  color:var(--text);padding:10px 12px;
-  font-family:'Noto Sans Arabic',monospace;font-size:13px;
+  width:100%;background:rgba(13,13,31,0.8);
+  border:1px solid rgba(255,255,255,0.06);
+  color:var(--text);padding:11px 14px;
+  font-family:'Space Mono',monospace;font-size:13px;
   outline:none;border-radius:0;
-  transition:border-color 0.1s;
+  transition:border-color 0.15s, box-shadow 0.15s;
 }
-.field:focus{border-color:var(--neon);}
+.field:focus{border-color:rgba(0,255,163,0.4);box-shadow:0 0 0 1px rgba(0,255,163,0.1) inset;}
 .field::placeholder{color:var(--dim);}
 
 .btn-main{
-  width:100%;padding:12px;background:var(--neon);
-  border:none;color:#000;
-  font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;
-  cursor:pointer;letter-spacing:1px;text-transform:uppercase;
-  transition:opacity 0.1s,transform 0.08s;
+  width:100%;padding:13px;
+  background:linear-gradient(135deg,var(--neon),var(--neon2));
+  border:none;color:#030810;
+  font-family:'Space Mono',monospace;font-size:12px;font-weight:700;
+  cursor:pointer;letter-spacing:2px;text-transform:uppercase;
+  transition:opacity 0.15s,transform 0.08s,box-shadow 0.15s;
+  box-shadow:0 4px 20px rgba(0,255,163,0.3);
+  position:relative;overflow:hidden;
 }
-.btn-main:active{opacity:0.8;transform:scale(0.98);}
+.btn-main::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,0.15) 50%,transparent 60%);
+  transform:translateX(-100%);transition:transform 0.4s;
+}
+.btn-main:hover::after{transform:translateX(100%);}
+.btn-main:active{opacity:0.85;transform:scale(0.98);box-shadow:0 2px 10px rgba(0,255,163,0.2);}
 
 .btn-line{
-  width:100%;padding:10px;background:transparent;
-  border:1px solid var(--bdr);color:var(--dim);
-  font-family:'IBM Plex Mono',monospace;font-size:11px;
-  cursor:pointer;letter-spacing:1px;text-transform:uppercase;
-  transition:border-color 0.1s,color 0.1s;
+  width:100%;padding:11px;background:transparent;
+  border:1px solid rgba(255,255,255,0.08);color:var(--dim);
+  font-family:'Space Mono',monospace;font-size:10px;
+  cursor:pointer;letter-spacing:2px;text-transform:uppercase;
+  transition:border-color 0.15s,color 0.15s,background 0.15s;
 }
-.btn-line:active{border-color:var(--neon);color:var(--neon);}
+.btn-line:hover{border-color:rgba(0,255,163,0.25);color:rgba(0,255,163,0.7);}
+.btn-line:active{border-color:var(--neon);color:var(--neon);background:rgba(0,255,163,0.05);}
 
 .row-sep{
-  display:flex;align-items:center;gap:8px;
-  font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);
+  display:flex;align-items:center;gap:10px;
+  font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);
 }
-.row-sep::before,.row-sep::after{content:'';flex:1;height:1px;background:var(--bdr);}
+.row-sep::before,.row-sep::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.05);}
 
 .join-row{display:flex;gap:6px;}
-.join-row .field{flex:1;letter-spacing:5px;text-align:center;font-weight:700;font-size:16px;}
-.join-row .btn-line{width:auto;padding:10px 14px;white-space:nowrap;flex-shrink:0;}
+.join-row .field{flex:1;letter-spacing:6px;text-align:center;font-weight:700;font-size:16px;}
+.join-row .btn-line{width:auto;padding:11px 16px;white-space:nowrap;flex-shrink:0;}
 
 /* ══ CREATE ══ */
 #s-create{padding:12px;overflow-y:auto;}
 
 .top-bar{
   display:flex;align-items:center;gap:10px;
-  width:min(360px,96vw);margin-bottom:10px;
+  width:min(380px,96vw);margin-bottom:12px;
 }
 .btn-back{
-  width:32px;height:32px;background:var(--c2);
-  border:1px solid var(--bdr);color:var(--dim);
-  font-family:'IBM Plex Mono',monospace;font-size:14px;
+  width:34px;height:34px;
+  background:rgba(13,13,31,0.8);
+  border:1px solid rgba(255,255,255,0.08);color:var(--dim);
+  font-family:'Space Mono',monospace;font-size:14px;
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;flex-shrink:0;
+  cursor:pointer;flex-shrink:0;transition:all 0.15s;
 }
+.btn-back:hover{color:var(--neon);border-color:rgba(0,255,163,0.3);}
 .btn-back:active{color:var(--neon);border-color:var(--neon);}
 .top-bar-title{
-  font-family:'IBM Plex Mono',monospace;font-size:12px;
-  color:var(--dim);letter-spacing:2px;text-transform:uppercase;
+  font-family:'Space Mono',monospace;font-size:11px;
+  color:var(--dim);letter-spacing:3px;text-transform:uppercase;
 }
 
 .cfg-panel{
-  width:min(360px,96vw);
-  background:var(--c1);border:1px solid var(--bdr);border-top:2px solid var(--dim);
-  padding:14px;display:flex;flex-direction:column;gap:10px;
+  width:min(380px,96vw);
+  background:rgba(8,8,21,0.92);
+  border:1px solid rgba(255,255,255,0.06);border-top:2px solid rgba(255,255,255,0.15);
+  padding:16px;display:flex;flex-direction:column;gap:12px;
+  backdrop-filter:blur(20px);
 }
-.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.cfg-item{display:flex;flex-direction:column;gap:4px;}
-.cfg-item label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.cfg-item{display:flex;flex-direction:column;gap:5px;}
+.cfg-item label{font-family:'Space Mono',monospace;font-size:8px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;}
 .cfg-item select{
-  background:var(--c2);border:1px solid var(--bdr);
-  color:var(--text);padding:8px 10px;
-  font-family:'Noto Sans Arabic',monospace;font-size:12px;
+  background:rgba(13,13,31,0.8);border:1px solid rgba(255,255,255,0.06);
+  color:var(--text);padding:9px 11px;
+  font-family:'Space Mono',monospace;font-size:11px;
   outline:none;border-radius:0;width:100%;
+  transition:border-color 0.15s;
 }
-.cfg-item select:focus{border-color:var(--neon);}
-select option{background:#111120;}
+.cfg-item select:focus{border-color:rgba(0,255,163,0.3);}
+select option{background:#0d0d1f;}
 
 .coop-info{
-  background:#0099ff08;border:1px solid #0099ff22;border-left:2px solid var(--blue);
-  padding:8px 10px;font-size:11px;color:#6699bb;line-height:1.6;
+  background:rgba(0,122,255,0.05);
+  border:1px solid rgba(0,122,255,0.15);border-left:2px solid var(--blue);
+  padding:9px 12px;font-size:11px;color:#6699cc;line-height:1.7;
+  font-family:'Noto Sans Arabic',sans-serif;
 }
 
 /* ══ LOBBY ══ */
 #s-lobby{padding:16px;}
 .lobby-panel{
-  width:min(320px,90vw);
-  background:var(--c1);border:1px solid var(--bdr);border-top:2px solid var(--gold);
-  padding:18px;display:flex;flex-direction:column;gap:10px;align-items:center;
+  width:min(340px,92vw);
+  background:rgba(8,8,21,0.9);border:1px solid rgba(255,215,0,0.12);border-top:2px solid var(--gold);
+  padding:20px;display:flex;flex-direction:column;gap:12px;align-items:center;
+  backdrop-filter:blur(20px);
+  box-shadow:0 0 40px rgba(255,215,0,0.04), 0 20px 60px rgba(0,0,0,0.6);
 }
-.code-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;}
+.code-lbl{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:4px;text-transform:uppercase;}
 #roomCodeDisplay{
-  font-family:'IBM Plex Mono',monospace;font-size:36px;font-weight:700;
-  color:var(--gold);letter-spacing:12px;
-  text-shadow:0 0 16px #ffcc0055;
+  font-family:'Orbitron',monospace;font-size:38px;font-weight:900;
+  color:var(--gold);letter-spacing:10px;
+  text-shadow:var(--glow-gold);
+  animation:codePulse 2s ease-in-out infinite;
 }
-#lobbyPlayers{width:100%;display:flex;flex-direction:column;gap:4px;}
+@keyframes codePulse{
+  0%,100%{text-shadow:var(--glow-gold);}
+  50%{text-shadow:0 0 20px #ffd70088,0 0 60px #ffd70030;}
+}
+#lobbyPlayers{width:100%;display:flex;flex-direction:column;gap:5px;}
 .player-row{
   display:flex;justify-content:space-between;align-items:center;
-  background:var(--c2);padding:7px 10px;font-size:12px;
-  border-left:2px solid var(--dim);
+  background:rgba(13,13,31,0.7);padding:8px 12px;font-size:12px;
+  border-left:2px solid var(--dim);font-family:'Space Mono',monospace;
+  transition:border-color 0.2s;
 }
 .player-row.is-host{border-left-color:var(--gold);}
-.player-row .ready-tag{
-  font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--neon);
-  letter-spacing:1px;
-}
-#lobbySettings{font-size:10px;color:var(--dim);text-align:center;line-height:1.8;font-family:'IBM Plex Mono',monospace;}
+.player-row .ready-tag{font-family:'Space Mono',monospace;font-size:9px;color:var(--neon);letter-spacing:2px;}
+#lobbySettings{font-size:9px;color:var(--dim);text-align:center;line-height:2;font-family:'Space Mono',monospace;letter-spacing:1px;}
 
 /* ══ COUNTDOWN ══ */
-#s-countdown{background:var(--bg);}
+#s-countdown{background:transparent;}
 #cdNum{
-  font-family:'IBM Plex Mono',monospace;
-  font-size:clamp(100px,25vw,160px);font-weight:700;
+  font-family:'Orbitron',monospace;
+  font-size:clamp(100px,28vw,180px);font-weight:900;
   color:var(--neon);line-height:1;
-  text-shadow:0 0 40px #00ff9977,0 0 100px #00ff9933;
+  text-shadow:0 0 40px #00ffa388,0 0 100px #00ffa333, 0 0 200px #00ffa310;
+  animation:cdPulse 1s ease-in-out;
 }
-.cd-sub{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:5px;color:var(--dim);text-transform:uppercase;margin-top:8px;}
+@keyframes cdPulse{from{transform:scale(1.4);opacity:0}to{transform:scale(1);opacity:1}}
+.cd-sub{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:6px;color:var(--dim);text-transform:uppercase;margin-top:12px;}
 
 /* ══ HUD ══ */
 #hud{
   width:100%;
   display:flex;align-items:stretch;
-  background:var(--c1);
-  border-bottom:1px solid var(--bdr);
-  height:32px;flex-shrink:0;
+  background:rgba(4,4,13,0.95);
+  border-bottom:1px solid rgba(0,255,163,0.08);
+  height:34px;flex-shrink:0;
+  backdrop-filter:blur(10px);
 }
 .hitem{
-  display:flex;align-items:center;gap:5px;
-  padding:0 10px;border-left:1px solid var(--bdr);
-  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  display:flex;align-items:center;gap:6px;
+  padding:0 12px;border-left:1px solid rgba(255,255,255,0.04);
+  font-family:'Space Mono',monospace;font-size:10px;
 }
 .hitem:first-child{border-left:none;}
 .hi-label{color:var(--dim);}
-.hi-val{color:var(--text);font-weight:600;}
+.hi-val{color:var(--text);font-weight:700;}
 .hi-val.ready{color:var(--acc);}
 .hi-val.cd{color:var(--dim);}
-.hitem.hi-time .hi-val{color:var(--gold);font-size:12px;}
+.hitem.hi-time .hi-val{color:var(--gold);font-size:12px;text-shadow:0 0 8px #ffd70055;}
 #hudRole{display:none;}
 
-#timerBar{height:2px;background:var(--c2);width:100%;flex-shrink:0;}
-#timerFill{height:100%;background:var(--neon);transition:width 0.5s linear;}
+#timerBar{height:2px;background:rgba(255,255,255,0.04);width:100%;flex-shrink:0;}
+#timerFill{height:100%;background:linear-gradient(90deg,var(--neon2),var(--neon));transition:width 0.5s linear;box-shadow:0 0 6px var(--neon);}
 
 /* ══ CANVAS WRAP ══ */
 #wrap{
@@ -221,76 +282,93 @@ select option{background:#111120;}
 
 /* ══ SCOREBOARD ══ */
 #scoreboard{
-  position:absolute;top:6px;left:6px;
-  background:#000007dd;border:1px solid var(--bdr);border-left:2px solid var(--neon2);
-  padding:6px 8px;min-width:100px;font-size:10px;
-  font-family:'IBM Plex Mono',monospace;display:none;
+  position:absolute;top:8px;left:8px;
+  background:rgba(4,4,13,0.88);
+  border:1px solid rgba(255,255,255,0.06);border-left:2px solid var(--neon2);
+  padding:7px 10px;min-width:110px;font-size:10px;
+  font-family:'Space Mono',monospace;display:none;
+  backdrop-filter:blur(10px);
 }
-#scoreboard .sb-row{display:flex;justify-content:space-between;gap:8px;padding:1px 0;}
-#scoreboard .sb-name{color:var(--dim);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#scoreboard .sb-pts{color:var(--gold);}
+#scoreboard .sb-row{display:flex;justify-content:space-between;gap:8px;padding:2px 0;}
+#scoreboard .sb-name{color:var(--dim);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#scoreboard .sb-pts{color:var(--gold);text-shadow:0 0 6px #ffd70044;}
 #scoreboard .sb-me{color:var(--neon);}
 
 /* ══ MINIMAP ══ */
-#minimap{position:absolute;bottom:6px;right:6px;border:1px solid var(--bdr);opacity:0.75;}
+#minimap{
+  position:absolute;bottom:8px;right:8px;
+  border:1px solid rgba(0,255,163,0.1);
+  opacity:0.8;box-shadow:0 0 20px rgba(0,0,0,0.5);
+}
 
 /* ══ D-PAD ══ */
 #dpad{
   display:none;position:relative;
-  width:126px;height:126px;flex-shrink:0;
-  margin:5px auto 3px;
+  width:132px;height:132px;flex-shrink:0;
+  margin:6px auto 4px;
 }
 #dpad-center{display:none;}
 .db{
-  position:absolute;width:40px;height:40px;
-  background:var(--c2);border:1px solid var(--bdr);
-  color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;
+  position:absolute;width:42px;height:42px;
+  background:rgba(13,13,31,0.9);
+  border:1px solid rgba(255,255,255,0.07);
+  color:var(--dim);font-family:'Space Mono',monospace;font-size:14px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;user-select:none;
-  transition:background 0.07s,color 0.07s,transform 0.06s;
+  transition:background 0.07s,color 0.07s,transform 0.06s,box-shadow 0.07s;
 }
-.db.on{background:var(--neon);color:#000;border-color:var(--neon);transform:scale(0.9);}
-#db-u{top:0;left:43px;border-radius:4px 4px 0 0;}
-#db-d{bottom:0;left:43px;border-radius:0 0 4px 4px;}
-#db-l{top:43px;left:0;border-radius:4px 0 0 4px;}
-#db-r{top:43px;right:0;border-radius:0 4px 4px 0;}
+.db.on{
+  background:rgba(0,255,163,0.15);color:var(--neon);
+  border-color:rgba(0,255,163,0.5);transform:scale(0.88);
+  box-shadow:0 0 12px rgba(0,255,163,0.2);
+}
+#db-u{top:0;left:45px;border-radius:6px 6px 0 0;}
+#db-d{bottom:0;left:45px;border-radius:0 0 6px 6px;}
+#db-l{top:45px;left:0;border-radius:6px 0 0 6px;}
+#db-r{top:45px;right:0;border-radius:0 6px 6px 0;}
 
 /* ══ BREAK INDICATOR ══ */
 #brkInd{
-  position:absolute;bottom:6px;left:6px;
-  background:#000007dd;border-left:2px solid var(--acc);
-  padding:3px 8px;font-size:9px;
-  font-family:'IBM Plex Mono',monospace;letter-spacing:1px;
-  display:none;
+  position:absolute;bottom:8px;left:8px;
+  background:rgba(4,4,13,0.88);
+  border:1px solid rgba(255,255,255,0.06);
+  border-left:2px solid var(--acc);
+  padding:4px 10px;font-size:9px;
+  font-family:'Space Mono',monospace;letter-spacing:2px;
+  display:none;backdrop-filter:blur(10px);
 }
 
 /* ══ END SCREEN ══ */
-#s-end{padding:14px;gap:12px;}
+#s-end{padding:16px;gap:14px;}
 .end-ttl{
-  font-family:'IBM Plex Mono',monospace;
-  font-size:clamp(16px,4vw,22px);font-weight:700;
-  color:var(--gold);letter-spacing:2px;text-align:center;
-  text-shadow:0 0 14px #ffcc0044;
+  font-family:'Orbitron',monospace;
+  font-size:clamp(14px,3.5vw,20px);font-weight:900;
+  color:var(--gold);letter-spacing:3px;text-align:center;
+  text-shadow:var(--glow-gold);
 }
-#endPodium{width:100%;display:flex;flex-direction:column;gap:4px;}
+#endPodium{width:100%;display:flex;flex-direction:column;gap:5px;}
 .podium-row{
-  display:flex;align-items:center;gap:8px;
-  padding:8px 12px;background:var(--c2);
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px;
+  background:rgba(13,13,31,0.7);
   border-left:2px solid var(--dim);font-size:13px;
+  font-family:'Space Mono',monospace;
 }
-.podium-row.first{border-left-color:var(--gold);background:var(--c1);}
-.podium-row .rank{font-size:16px;width:24px;text-align:center;}
+.podium-row.first{border-left-color:var(--gold);background:rgba(255,215,0,0.05);box-shadow:inset 0 0 20px rgba(255,215,0,0.03);}
+.podium-row .rank{font-size:18px;width:26px;text-align:center;}
 .podium-row .pname{flex:1;font-weight:700;}
-.podium-row .ppts{color:var(--gold);font-family:'IBM Plex Mono',monospace;font-weight:700;}
+.podium-row .ppts{color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;text-shadow:0 0 8px #ffd70044;}
 
 /* ══ TOAST ══ */
 #toast{
-  position:fixed;bottom:14px;left:50%;transform:translateX(-50%) translateY(6px);
-  background:var(--c2);border:1px solid var(--bdr);border-top:1px solid var(--neon2);
-  color:var(--text);padding:7px 14px;
-  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(8px);
+  background:rgba(8,8,21,0.95);
+  border:1px solid rgba(255,255,255,0.08);border-top:1px solid rgba(0,255,163,0.3);
+  color:var(--text);padding:8px 16px;
+  font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;
   opacity:0;transition:opacity 0.2s,transform 0.2s;
   pointer-events:none;z-index:100;white-space:nowrap;
+  backdrop-filter:blur(20px);
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
@@ -304,7 +382,8 @@ select option{background:#111120;}
 <!-- ══ MENU ══ -->
 <div id="s-menu" class="screen active">
   <div class="logo">
-    <div class="logo-main">🏺 متاهة الكنوز</div>
+    <span class="logo-icon">🏺</span>
+    <div class="logo-main">متاهة الكنوز</div>
     <div class="logo-sub">maze · online · v4</div>
   </div>
   <div class="panel">
@@ -483,7 +562,7 @@ const SIZE_MAP = { sm:[11,11], md:[17,17], lg:[25,25], xl:[31,31], xxl:[41,41] }
 const PLAYER_COLORS = ['#5588ff','#ff5566','#44dd88','#ffaa33','#cc55ff','#55ccff','#ff8833','#88ff44'];
 
 // Animal emojis for players (in order) - matching user spec
-const PLAYER_ANIMALS = ['🐭','🐱','🦄','🐒','🐸','🪼','🦊','🐼'];
+const PLAYER_ANIMALS = ['🐸','🐱','🐭','🦄','🪼','🐸','🐱','🐭'];
 
 // Team wall colors for coop mode (matching animal theme)
 // 🐭=white/gray, 🐱=yellow, 🦄=purple, 🐒=orange, 🐸=green, 🦊=orange, 🐼=white, 🐧=blue
@@ -839,16 +918,25 @@ function onGameStart(d) {
   cachedWallTints = null;
   if(roomConfig.gameMode==='coop'){
     cachedWallTints={};
-    const teamList=[];
-    const seen={};
+    // Build team -> dasher animal map
+    const teamDasherAnimal={};
     Object.values(players).forEach(p=>{
-      if(!(p.teamId in seen)){ seen[p.teamId]=true; teamList.push({col:p.col,row:p.row,animal:p.animal||'🐭'}); }
+      if(p.role==='dasher') teamDasherAnimal[p.teamId]=p.animal||'🐭';
+    });
+    // Each team: find the dasher spawn as "team center"
+    const teamCenters=[];
+    const seenTeam={};
+    Object.values(players).forEach(p=>{
+      if(p.role==='dasher' && !(p.teamId in seenTeam)){
+        seenTeam[p.teamId]=true;
+        teamCenters.push({col:p.col,row:p.row,animal:p.animal||'🐭'});
+      }
     });
     for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
       if(maze[r][c]!==1) continue;
       let minD=Infinity,ani=null;
-      for(const t of teamList){ const d=Math.abs(t.col-c)+Math.abs(t.row-r); if(d<minD){minD=d;ani=t.animal;} }
-      if(minD<=12) cachedWallTints[r*1000+c]=ani;
+      for(const t of teamCenters){ const d=Math.abs(t.col-c)+Math.abs(t.row-r); if(d<minD){minD=d;ani=t.animal;} }
+      if(minD<=14) cachedWallTints[r*1000+c]=ani;
     }
   }
 
@@ -1184,71 +1272,100 @@ function getScores(){
 // ══════════════════════════════════════════════════
 //  DRAW
 // ══════════════════════════════════════════════════
-// Flat pixel colors per animal
+// Flat pixel colors per animal - matching emoji square colors
 const ANIMAL_WALL_FLAT = {
-  '🐸': '#2d7a2d',  // green
-  '🐱': '#a08000',  // yellow
-  '🐭': '#666688',  // gray
-  '🦄': '#7733aa',  // purple
-  '🪼': '#1155aa',  // blue
-  '🐒': '#aa5500',  // orange
-  '🦊': '#cc4400',
-  '🐼': '#555566',
-  '🐧': '#224488',
+  '🐸': '#2d7a2d',   // 🟩 green
+  '🐱': '#b08800',   // 🟨 yellow
+  '🐭': '#888899',   // ⬜ gray/white
+  '🦄': '#8833bb',   // 🟪 purple
+  '🪼': '#1155cc',   // 🟦 blue
 };
 
 function drawGame(){
   if(!ctx||!myPlayer) return;
-  ctx.clearRect(0,0,VW,VH);
 
   const offX=Math.max(0,Math.min(myPlayer.px-VW/2,MW-VW));
   const offY=Math.max(0,Math.min(myPlayer.py-VH/2,MH-VH));
+
+  // ── Background: deep space dark ──
+  ctx.fillStyle='#04040d';
+  ctx.fillRect(0,0,VW,VH);
+
   ctx.save();
   ctx.translate(-offX,-offY);
 
-  // ── Floor: solid dark tiles ──
-  const floorA='#0c0c18', floorB='#0e0e1c';
+  // ── Floor: subtle two-tone tiles with scanline feel ──
+  const floorA='#090916', floorB='#0b0b1a';
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(maze[r][c]===0){
       ctx.fillStyle=(c+r)%2===0?floorA:floorB;
       ctx.fillRect(c*CELL,r*CELL,CELL,CELL);
+      // Subtle floor grid lines
+      ctx.fillStyle='rgba(0,255,163,0.018)';
+      ctx.fillRect(c*CELL,r*CELL,CELL,1);
+      ctx.fillRect(c*CELL,r*CELL,1,CELL);
     }
   }
 
-  // ── Walls: flat solid colored blocks ──
+  // ── Walls: rich 3D-feeling blocks ──
   const isCoop=roomConfig.gameMode==='coop';
+  const tick=performance.now()/1000;
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(maze[r][c]===1){
       const x=c*CELL, y=r*CELL;
-      let col='#1a1a30';
+      let baseCol='#111128';
+      let accentCol='rgba(0,255,163,0.06)';
+
       if(isCoop && cachedWallTints){
         const ani=cachedWallTints[r*1000+c];
-        if(ani && ANIMAL_WALL_FLAT[ani]) col=ANIMAL_WALL_FLAT[ani];
+        if(ani && ANIMAL_WALL_FLAT[ani]){
+          baseCol=ANIMAL_WALL_FLAT[ani];
+          // Make it glow subtly
+          const h=hexToRgb(ANIMAL_WALL_FLAT[ani]);
+          accentCol=`rgba(${h.r},${h.g},${h.b},0.3)`;
+        }
       }
-      ctx.fillStyle=col;
+
+      // Main wall fill with subtle gradient feel
+      ctx.fillStyle=baseCol;
       ctx.fillRect(x,y,CELL,CELL);
-      // Single pixel lighter top edge for depth hint
-      ctx.fillStyle='rgba(255,255,255,0.08)';
+
+      // Inner bevel: top-left light edge
+      ctx.fillStyle='rgba(255,255,255,0.09)';
       ctx.fillRect(x,y,CELL,1);
-      ctx.fillStyle='rgba(0,0,0,0.25)';
+      ctx.fillRect(x,y,1,CELL);
+
+      // Bottom-right shadow edge
+      ctx.fillStyle='rgba(0,0,0,0.4)';
       ctx.fillRect(x,y+CELL-1,CELL,1);
+      ctx.fillRect(x+CELL-1,y,1,CELL);
+
+      // Subtle inner glow on non-default walls
+      if(isCoop && cachedWallTints && cachedWallTints[r*1000+c]){
+        ctx.fillStyle=accentCol;
+        ctx.fillRect(x+1,y+1,CELL-2,CELL-2);
+      }
     }
   }
 
   // ── Trails (local player dash) ──
   if(localDash){
-    ctx.globalAlpha=0;
     localDash.trail.forEach(t=>{
       if(t.life<=0) return;
       const tx=t.c*CELL, ty=t.r*CELL;
-      ctx.globalAlpha=t.life*0.3;
-      ctx.fillStyle=myPlayer.color||'#00ff99';
-      ctx.fillRect(tx+2,ty+2,CELL-4,CELL-4);
+      const col=myPlayer.color||'#00ffa3';
+      ctx.globalAlpha=t.life*0.22;
+      ctx.fillStyle=col;
+      ctx.fillRect(tx+3,ty+3,CELL-6,CELL-6);
+      // Inner bright core
+      ctx.globalAlpha=t.life*0.12;
+      ctx.fillStyle='#ffffff';
+      ctx.fillRect(tx+CELL/2-2,ty+CELL/2-2,4,4);
     });
     ctx.globalAlpha=1;
   }
 
-  // ── Other players' movement interpolation ──
+  // ── Other players interpolation ──
   Object.entries(players).forEach(([id,p])=>{
     if(id===myId) return;
     if(p.dash){
@@ -1261,18 +1378,26 @@ function drawGame(){
     }
   });
 
-  // ── Treasures: flat emoji centered in cell ──
+  // ── Treasures: glowing with pulsing halo ──
   treasures.forEach(t=>{
     if(t.got) return;
     const tx=t.c*CELL+CELL/2;
     const ty=t.r*CELL+CELL/2;
-    // Subtle background glow square
-    ctx.globalAlpha=0.18+Math.sin(t.t)*0.06;
+    const pulse=0.5+Math.sin(t.t)*0.5;
+
+    // Outer glow halo
+    ctx.globalAlpha=0.08+pulse*0.08;
     ctx.fillStyle=t.glow;
-    ctx.fillRect(t.c*CELL+2,t.r*CELL+2,CELL-4,CELL-4);
+    ctx.fillRect(t.c*CELL,t.r*CELL,CELL,CELL);
+
+    // Inner glow square
+    ctx.globalAlpha=0.15+pulse*0.1;
+    ctx.fillStyle=t.glow;
+    ctx.fillRect(t.c*CELL+3,t.r*CELL+3,CELL-6,CELL-6);
     ctx.globalAlpha=1;
+
     // Emoji
-    ctx.font=`${Math.round(CELL*.62)}px serif`;
+    ctx.font=`${Math.round(CELL*.64)}px serif`;
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(t.sym,tx,ty+1);
   });
@@ -1282,11 +1407,11 @@ function drawGame(){
     if(id===myId) return;
     drawPlayer(p.px,p.py,p.color,p.name,false,p.role||'dasher',p.animal||'🐭');
   });
-  if(myPlayer) drawPlayer(myPlayer.px,myPlayer.py,myPlayer.color||'#00ff99',myPlayer.name,true,myPlayer.role||'dasher',myPlayer.animal||'🐭');
+  if(myPlayer) drawPlayer(myPlayer.px,myPlayer.py,myPlayer.color||'#00ffa3',myPlayer.name,true,myPlayer.role||'dasher',myPlayer.animal||'🐭');
 
-  // ── Particles: simple squares ──
+  // ── Particles ──
   particles.forEach(p=>{
-    ctx.globalAlpha=p.life*0.85;
+    ctx.globalAlpha=p.life*0.9;
     ctx.fillStyle=p.col;
     const s=Math.max(1,p.size*.6);
     ctx.fillRect(p.x-s/2,p.y-s/2,s,s);
@@ -1296,7 +1421,7 @@ function drawGame(){
   // ── Floats ──
   floats.forEach(f=>{
     ctx.globalAlpha=Math.min(f.life,1);
-    ctx.font='bold 13px IBM Plex Mono,monospace';
+    ctx.font='bold 12px Space Mono,monospace';
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillStyle=f.col;
     ctx.fillText(f.text,f.x,f.y);
@@ -1308,43 +1433,63 @@ function drawGame(){
   updateScoreboard();
 }
 
+// Wall player emoji squares mapping spec
+const WALL_EMOJI = {
+  '🐸': '🟩',
+  '🐱': '🟨',
+  '🐭': '⬜',
+  '🦄': '🟪',
+  '🪼': '🟦',
+};
+
 function drawPlayer(x,y,color,name,isMe=false,role='dasher',animal='🐭'){
-  const S=CELL-4; // square size slightly smaller than cell
+  const S=CELL-4;
   const px=x-S/2, py=y-S/2;
 
   if(role==='wall'){
-    // Solid flat colored square = wall player
-    const wallCol=ANIMAL_WALL_FLAT[animal]||'#444466';
-    ctx.fillStyle=wallCol;
-    ctx.fillRect(px,py,S,S);
-    // White border if it's me
+    // Wall player: the colored square emoji — full cell size, NO extra wrapper
+    const wallEmoji = WALL_EMOJI[animal] || '⬜';
+
+    // Subtle glow behind the square for "my" wall player
     if(isMe){
-      ctx.strokeStyle='#ffffff';ctx.lineWidth=2;
-      ctx.strokeRect(px+1,py+1,S-2,S-2);
+      const wallCol=ANIMAL_WALL_FLAT[animal]||'#444466';
+      const rgb=hexToRgb(wallCol);
+      ctx.globalAlpha=0.18;
+      ctx.fillStyle=`rgb(${rgb.r},${rgb.g},${rgb.b})`;
+      ctx.fillRect(px-3,py-3,S+6,S+6);
+      ctx.globalAlpha=1;
     }
-    // Small animal emoji top-right corner
-    ctx.font=`${Math.round(S*0.42)}px serif`;
-    ctx.textAlign='left';ctx.textBaseline='top';
-    ctx.fillText(animal,px+2,py+2);
+
+    // Draw the square emoji — centered, no circles, no rectangles, just the emoji
+    ctx.font=`${Math.round(S*1.05)}px serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(wallEmoji,x,y+1);
+
   } else {
-    // Runner: just the emoji, centered in the cell
+    // Runner: just the animal emoji — no boxes, no circles, just the emoji
+    // Subtle glow ring for local player only (not visible shape, just ambiance)
     if(isMe){
-      // Highlight: neon square behind
-      ctx.fillStyle='#00ff9918';
+      const rgb=hexToRgb(color);
+      ctx.globalAlpha=0.12;
+      ctx.fillStyle=`rgb(${rgb.r},${rgb.g},${rgb.b})`;
       ctx.fillRect(px,py,S,S);
-      ctx.strokeStyle='#00ff99';ctx.lineWidth=1.5;
-      ctx.strokeRect(px+0.75,py+0.75,S-1.5,S-1.5);
+      ctx.globalAlpha=1;
     }
-    ctx.font=`${Math.round(S*0.82)}px serif`;
+    ctx.font=`${Math.round(S*0.9)}px serif`;
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(animal,x,y+1);
   }
 
-  // Name tag: clean monospace label above
-  ctx.font='bold 8px IBM Plex Mono,monospace';
+  // Name tag above
+  ctx.font='bold 8px Space Mono,monospace';
   ctx.textAlign='center';ctx.textBaseline='bottom';
-  ctx.fillStyle=isMe?'#00ff99':'#44445a';
+  ctx.fillStyle=isMe?'#00ffa3':'rgba(100,100,130,0.8)';
   ctx.fillText(name,x,py-2);
+}
+
+function hexToRgb(hex){
+  const n=parseInt((hex||'#888888').replace('#',''),16);
+  return {r:(n>>16)&255,g:(n>>8)&255,b:n&255};
 }
 
 function hexMix(hex1, hex2, t){
@@ -1385,22 +1530,43 @@ function drawMinimap(offX,offY){
   const mw=80,mh=80;
   const cw=mw/COLS, ch=mh/ROWS;
   mc.clearRect(0,0,mw,mh);
-  mc.fillStyle='#0b0614cc'; mc.fillRect(0,0,mw,mh);
+
+  // Background
+  mc.fillStyle='rgba(4,4,13,0.95)'; mc.fillRect(0,0,mw,mh);
+
+  // Walls
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
-    if(maze[r][c]===1){ mc.fillStyle='#2e2050'; mc.fillRect(c*cw,r*ch,cw,ch); }
+    if(maze[r][c]===1){
+      mc.fillStyle='#1a1a38';
+      mc.fillRect(c*cw,r*ch,cw,ch);
+    }
   }
+
+  // Treasures as colored dots
   treasures.forEach(t=>{
     if(t.got) return;
     mc.fillStyle=t.glow;
-    mc.fillRect(t.c*cw+cw*.2,t.r*ch+ch*.2,cw*.6,ch*.6);
+    mc.globalAlpha=0.7;
+    mc.fillRect(t.c*cw+cw*.25,t.r*ch+ch*.25,cw*.5,ch*.5);
+    mc.globalAlpha=1;
   });
-  // Players
+
+  // Players as dots
   Object.entries(players).forEach(([id,p])=>{
-    mc.fillStyle=p.color||'#5599ff';
+    const isMe=id===myId;
+    mc.fillStyle=isMe?'#00ffa3':(p.color||'#5599ff');
+    mc.globalAlpha=isMe?1:0.8;
+    const dotR=Math.max(cw,ch)*1.1;
     mc.beginPath();
-    mc.arc(p.col*cw+cw/2,p.row*ch+ch/2,Math.max(cw,ch)*.9,0,Math.PI*2);
+    mc.arc(p.col*cw+cw/2,p.row*ch+ch/2,dotR,0,Math.PI*2);
     mc.fill();
+    mc.globalAlpha=1;
   });
+
+  // Viewport rect indicator
+  mc.strokeStyle='rgba(0,255,163,0.3)';
+  mc.lineWidth=0.7;
+  mc.strokeRect(offX/MW*mw,offY/MH*mh,(VW/MW)*mw,(VH/MH)*mh);
 }
 
 function updateScoreboard(){
@@ -1454,11 +1620,12 @@ function updateGameHUD(){
   if(roomConfig.gameMode==='coop'){
     roleEl.style.display='flex';
     const myAnimal = myPlayer.animal||'🐭';
+    const wallSq = WALL_EMOJI[myAnimal]||'⬜';
     if(myPlayer.role==='wall'){
-      roleEl.innerHTML=`<span class="hi-val" style="color:#ffaa44">${myAnimal} حيطة</span>`;
+      roleEl.innerHTML=`<span class="hi-val" style="color:#ffaa44">${wallSq} حيطة</span>`;
       document.getElementById('hudBreak').parentElement.style.display='none';
     } else {
-      roleEl.innerHTML=`<span class="hi-val" style="color:var(--green)">${myAnimal} داشر</span>`;
+      roleEl.innerHTML=`<span class="hi-val" style="color:var(--neon)">${myAnimal} رانر</span>`;
       document.getElementById('hudBreak').parentElement.style.display='flex';
     }
   } else {
