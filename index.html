@@ -411,6 +411,10 @@ select option{background:#0d1525;}
           <option value="500" selected>٥٠٠</option>
           <option value="1000">١٠٠٠</option>
           <option value="2000">٢٠٠٠</option>
+          <option value="3000">٣٠٠٠</option>
+          <option value="4000">٤٠٠٠</option>
+          <option value="5000">٥٠٠٠</option>
+          <option value="6000">٦٠٠٠</option>
         </select>
       </label>
     </div>
@@ -497,6 +501,30 @@ select option{background:#0d1525;}
 const ABLY_KEY = 'UcDcBw.YJJl6g:LDwkET05nlae7VeirAz44uL8hE16cLZ8MyrSFwCnolk';
 const CELL = 32;
 const SIZE_MAP = { sm:[11,11], md:[17,17], lg:[25,25], xl:[31,31], xxl:[41,41] };
+
+// ══════════════════════════════════════════════════
+//  🖼️ صور الخلفية والجدران - ضع روابط الصور هنا
+// ══════════════════════════════════════════════════
+// صورة أرضية المتاهة (تُفرد على كامل مساحة الخريطة)
+const FLOOR_IMAGE_URL = 'https://i.postimg.cc/Y2TqgM5Z/Ancient_stone_floor_in_dungeon.png';   // ← ضع رابط صورة الأرضية هنا  مثال: 'images/floor.png'
+// صورة مربعات الجدران (تتكرر على كل مربع جدار)
+const WALL_IMAGE_URL  = 'https://i.postimg.cc/8k7zjjYS/Moss_covered_stone_slab_with_roots.png';   // ← ضع رابط صورة الجدران هنا   مثال: 'images/wall.png'
+
+let floorImg = null;
+let wallImg  = null;
+
+function loadGameImages(){
+  if(FLOOR_IMAGE_URL){
+    floorImg = new Image();
+    floorImg.src = FLOOR_IMAGE_URL;
+  }
+  if(WALL_IMAGE_URL){
+    wallImg = new Image();
+    wallImg.src = WALL_IMAGE_URL;
+  }
+}
+loadGameImages();
+// ══════════════════════════════════════════════════
 
 // roundRect polyfill for older mobile browsers
 if(!CanvasRenderingContext2D.prototype.roundRect){
@@ -1031,12 +1059,18 @@ function drawGame(){
   ctx.translate(-offX,-offY);
 
   // Background floor
-  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
-    if(maze[r][c]===0){
-      const x=c*CELL,y=r*CELL;
-      const even=(c+r)%2===0;
-      ctx.fillStyle=even?'#1e2d45':'#192540';
-      ctx.fillRect(x,y,CELL,CELL);
+  if(floorImg && floorImg.complete && floorImg.naturalWidth>0){
+    // 🖼️ صورة الأرضية تُفرد على كامل مساحة الخريطة
+    ctx.drawImage(floorImg, 0, 0, MW, MH);
+  } else {
+    // اللون الافتراضي لو مفيش صورة
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+      if(maze[r][c]===0){
+        const x=c*CELL,y=r*CELL;
+        const even=(c+r)%2===0;
+        ctx.fillStyle=even?'#1e2d45':'#192540';
+        ctx.fillRect(x,y,CELL,CELL);
+      }
     }
   }
 
@@ -1044,16 +1078,22 @@ function drawGame(){
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(maze[r][c]===1){
       const x=c*CELL,y=r*CELL;
-      ctx.fillStyle='#2e5a8e';
-      ctx.fillRect(x,y,CELL,CELL);
-      ctx.fillStyle='#3d7ab8';
-      ctx.fillRect(x,y,CELL,3);
-      ctx.fillStyle='#356aa0';
-      ctx.fillRect(x,y,3,CELL);
-      ctx.fillStyle='#1a3a5c';
-      ctx.fillRect(x,y+CELL-3,CELL,3);
-      ctx.fillStyle='#1a3a5c';
-      ctx.fillRect(x+CELL-3,y,3,CELL);
+      if(wallImg && wallImg.complete && wallImg.naturalWidth>0){
+        // 🖼️ صورة الجدار على كل مربع جدار
+        ctx.drawImage(wallImg, x, y, CELL, CELL);
+      } else {
+        // الشكل الافتراضي لو مفيش صورة
+        ctx.fillStyle='#2e5a8e';
+        ctx.fillRect(x,y,CELL,CELL);
+        ctx.fillStyle='#3d7ab8';
+        ctx.fillRect(x,y,CELL,3);
+        ctx.fillStyle='#356aa0';
+        ctx.fillRect(x,y,3,CELL);
+        ctx.fillStyle='#1a3a5c';
+        ctx.fillRect(x,y+CELL-3,CELL,3);
+        ctx.fillStyle='#1a3a5c';
+        ctx.fillRect(x+CELL-3,y,3,CELL);
+      }
     }
   }
 
@@ -1273,12 +1313,19 @@ function onPlayAgain(d){ if(isHost) return; showScreen('lobby'); refreshLobby();
 
 // Touch
 const wrap2=document.getElementById('wrap');
-wrap2.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY;},{passive:true});
+let swipeLocked=false; // منع تسجيل أكثر من سوايب واحد في نفس الوقت
+wrap2.addEventListener('touchstart',e=>{
+  touchStartX=e.touches[0].clientX;
+  touchStartY=e.touches[0].clientY;
+  swipeLocked=false; // إعادة تفعيل عند بداية لمسة جديدة
+},{passive:true});
 wrap2.addEventListener('touchend',e=>{
+  if(swipeLocked) return; // تجاهل السوايب المكرر
   const dx=e.changedTouches[0].clientX-touchStartX;
   const dy=e.changedTouches[0].clientY-touchStartY;
-  const minSwipe=12;
+  const minSwipe=20; // رفع الحد الأدنى من 12 إلى 20 لتقليل الحساسية الزائدة
   if(Math.abs(dx)<minSwipe&&Math.abs(dy)<minSwipe) return;
+  swipeLocked=true; // قفل فوري بعد أول حركة مسجّلة
   if(Math.abs(dx)>Math.abs(dy)) tryInput(dx>0?[1,0]:[-1,0]);
   else tryInput(dy>0?[0,1]:[0,-1]);
 },{passive:true});
